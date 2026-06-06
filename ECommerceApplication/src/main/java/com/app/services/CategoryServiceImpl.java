@@ -1,108 +1,145 @@
 package com.app.services;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.mappers.CategoryMapper;
+import com.app.payloads.CategoryPageResponse;
+import com.app.payloads.UpdateCategoryRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
 import com.app.entites.Category;
-import com.app.entites.Product;
-import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
-import com.app.payloads.CategoryDTO;
+import com.app.payloads.CreateCategoryRequest;
 import com.app.payloads.CategoryResponse;
-import com.app.repositories.CategoryRepo;
+import com.app.repositories.CategoryRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
-
-@Transactional
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class CategoryServiceImpl implements CategoryService {
 
-	@Autowired
-	private CategoryRepo categoryRepo;
-	
-	@Autowired
-	private ProductService productService;
-
-	@Autowired
-	private ModelMapper modelMapper;
+	private final CategoryRepository categoryRepository;
+	private final CategoryMapper categoryMapper;
 
 	@Override
-	public CategoryDTO createCategory(Category category) {
-		Category savedCategory = categoryRepo.findByCategoryName(category.getCategoryName());
+	public CategoryResponse createCategory(
+			CreateCategoryRequest request
+	) {
 
-		if (savedCategory != null) {
-			throw new APIException("Category with the name '" + category.getCategoryName() + "' already exists !!!");
-		}
+		categoryRepository
+				.findByCategoryName(request.getCategoryName())
+				.ifPresent(category -> {
+					throw new IllegalStateException(
+							"Category already exists"
+					);
+				});
 
-		savedCategory = categoryRepo.save(category);
+		Category category =
+				categoryMapper.toEntity(request);
 
-		return modelMapper.map(savedCategory, CategoryDTO.class);
+		Category saved =
+				categoryRepository.save(category);
+
+		return categoryMapper.toResponse(saved);
 	}
 
 	@Override
-	public CategoryResponse getCategories(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-		Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
-				: Sort.by(sortBy).descending();
+	@Transactional(readOnly = true)
+	public CategoryResponse getCategoryById(
+			Long categoryId
+	) {
 
-		Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-		
-		Page<Category> pageCategories = categoryRepo.findAll(pageDetails);
+		Category category =
+				categoryRepository.findById(categoryId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Category",
+										"categoryId",
+										categoryId
+								));
 
-		List<Category> categories = pageCategories.getContent();
-
-		if (categories.size() == 0) {
-			throw new APIException("No category is created till now");
-		}
-
-		List<CategoryDTO> categoryDTOs = categories.stream()
-				.map(category -> modelMapper.map(category, CategoryDTO.class)).collect(Collectors.toList());
-
-		CategoryResponse categoryResponse = new CategoryResponse();
-		
-		categoryResponse.setContent(categoryDTOs);
-		categoryResponse.setPageNumber(pageCategories.getNumber());
-		categoryResponse.setPageSize(pageCategories.getSize());
-		categoryResponse.setTotalElements(pageCategories.getTotalElements());
-		categoryResponse.setTotalPages(pageCategories.getTotalPages());
-		categoryResponse.setLastPage(pageCategories.isLast());
-		
-		return categoryResponse;
+		return categoryMapper.toResponse(category);
 	}
 
 	@Override
-	public CategoryDTO updateCategory(Category category, Long categoryId) {
-		Category savedCategory = categoryRepo.findById(categoryId)
-				.orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
+	public CategoryResponse updateCategory(
+			Long categoryId,
+			UpdateCategoryRequest request
+	) {
 
-		category.setCategoryId(categoryId);
+		Category category =
+				categoryRepository.findById(categoryId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Category",
+										"categoryId",
+										categoryId
+								));
 
-		savedCategory = categoryRepo.save(category);
+		categoryMapper.updateEntity(
+				request,
+				category
+		);
 
-		return modelMapper.map(savedCategory, CategoryDTO.class);
+		Category updated =
+				categoryRepository.save(category);
+
+		return categoryMapper.toResponse(updated);
 	}
 
 	@Override
-	public String deleteCategory(Long categoryId) {
-		Category category = categoryRepo.findById(categoryId)
-				.orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
-		
-		List<Product> products = category.getProducts();
+	public void deleteCategory(
+			Long categoryId
+	) {
 
-		products.forEach(product -> {
-			productService.deleteProduct(product.getProductId());
-		});
-		
-		categoryRepo.delete(category);
+		Category category =
+				categoryRepository.findById(categoryId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Category",
+										"categoryId",
+										categoryId
+								));
 
-		return "Category with categoryId: " + categoryId + " deleted successfully !!!";
+		categoryRepository.delete(category);
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public CategoryPageResponse getAllCategories(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	) {
+
+		Sort sort =
+				sortDir.equalsIgnoreCase("desc")
+						? Sort.by(sortBy).descending()
+						: Sort.by(sortBy).ascending();
+
+		Page<Category> categoryPage =
+				categoryRepository.findAll(
+						PageRequest.of(page, size, sort)
+				);
+
+		return CategoryPageResponse.builder()
+				.content(
+						categoryPage.getContent()
+								.stream()
+								.map(categoryMapper::toResponse)
+								.toList()
+				)
+				.pageNumber(categoryPage.getNumber())
+				.pageSize(categoryPage.getSize())
+				.totalElements(categoryPage.getTotalElements())
+				.totalPages(categoryPage.getTotalPages())
+				.lastPage(categoryPage.isLast())
+				.build();
+	}
+
+
 
 }

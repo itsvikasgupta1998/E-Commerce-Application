@@ -1,0 +1,22 @@
+package com.app.payloads;
+
+import com.app.entites.PaymentMethod;
+import com.app.entites.PaymentStatus;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class PaymentResponse {
+
+    private Long paymentId;
+    private PaymentMethod paymentMethod;
+    private PaymentStatus paymentStatus;
+    private String transactionId;
+    private LocalDateTime paidAt;
+}

@@ -1,21 +1,38 @@
 package com.app.services;
 
+import com.app.payloads.CartResponse;
 import java.util.List;
 
-import com.app.payloads.CartDTO;
+
 
 public interface CartService {
-	
-	CartDTO addProductToCart(Long cartId, Long productId, Integer quantity);
-	
-	List<CartDTO> getAllCarts();
-	
-	CartDTO getCart(String emailId, Long cartId);
-	
-	CartDTO updateProductQuantityInCart(Long cartId, Long productId, Integer quantity);
-	
-	void updateProductInCarts(Long cartId, Long productId);
-	
-	String deleteProductFromCart(Long cartId, Long productId);
-	
+
+	CartResponse addProductToCart(
+			Long cartId,
+			Long productId,
+			Integer quantity
+	);
+
+	CartResponse getCart(
+			String email,
+			Long cartId
+	);
+
+	List<CartResponse> getAllCarts();
+
+	CartResponse updateCartItemQuantity(
+			Long cartId,
+			Long productId,
+			Integer quantity
+	);
+
+	void removeProductFromCart(
+			Long cartId,
+			Long productId
+	);
+
+	void refreshProductPriceInCart(
+			Long cartId,
+			Long productId
+	);
 }

@@ -1,21 +1,22 @@
 package com.app.payloads;
 
-import java.util.List;
-
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryResponse {
 
-	private List<CategoryDTO> content;
-	private Integer pageNumber;
-	private Integer pageSize;
-	private Long totalElements;
-	private Integer totalPages;
-	private boolean lastPage;
-	
+	private Long categoryId;
+
+	private String categoryName;
+
+	private LocalDateTime createdAt;
+
+	private LocalDateTime updatedAt;
 }

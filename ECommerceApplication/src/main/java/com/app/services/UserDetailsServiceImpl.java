@@ -1,28 +1,33 @@
 package com.app.services;
 
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
 import com.app.config.UserInfoConfig;
 import com.app.entites.User;
-import com.app.exceptions.ResourceNotFoundException;
-import com.app.repositories.UserRepo;
+import com.app.repositories.UserRepository;
 
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
+@RequiredArgsConstructor
+public class UserDetailsServiceImpl
+		implements UserDetailsService {
 
-	@Autowired
-	private UserRepo userRepo;
+	private final UserRepository userRepository;
 
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		Optional<User> user = userRepo.findByEmail(username);
-		
-		return user.map(UserInfoConfig::new).orElseThrow(() -> new ResourceNotFoundException("User", "email", username));
+	public UserDetails loadUserByUsername(
+			String email
+	) throws UsernameNotFoundException {
+
+		User user =
+				userRepository.findByEmail(email)
+						.orElseThrow(() ->
+								new UsernameNotFoundException(
+										"User not found: " + email
+								));
+
+		return new UserInfoConfig(user);
 	}
 }

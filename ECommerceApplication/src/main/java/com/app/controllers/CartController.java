@@ -1,64 +1,80 @@
 package com.app.controllers;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.payloads.CartResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.app.payloads.CartDTO;
+import org.springframework.web.bind.annotation.*;
 import com.app.services.CartService;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 
 @RestController
-@RequestMapping("/api")
-@SecurityRequirement(name = "E-Commerce Application")
+@RequestMapping("/api/carts")
+@RequiredArgsConstructor
+@Tag(name = "Cart APIs")
 public class CartController {
-	
-	@Autowired
-	private CartService cartService;
 
-	@PostMapping("/public/carts/{cartId}/products/{productId}/quantity/{quantity}")
-	public ResponseEntity<CartDTO> addProductToCart(@PathVariable Long cartId, @PathVariable Long productId, @PathVariable Integer quantity) {
-		CartDTO cartDTO = cartService.addProductToCart(cartId, productId, quantity);
-		
-		return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.CREATED);
+	private final CartService cartService;
+
+	@PostMapping("/{cartId}/products/{productId}")
+	public ResponseEntity<CartResponse> addProduct(
+			@PathVariable Long cartId,
+			@PathVariable Long productId,
+			@RequestParam Integer quantity
+	) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(
+						cartService.addProductToCart(
+								cartId,
+								productId,
+								quantity
+						)
+				);
 	}
-	
-	@GetMapping("/admin/carts")
-	public ResponseEntity<List<CartDTO>> getCarts() {
-		
-		List<CartDTO> cartDTOs = cartService.getAllCarts();
-		
-		return new ResponseEntity<List<CartDTO>>(cartDTOs, HttpStatus.FOUND);
+
+	@GetMapping("/{email}/{cartId}")
+	public ResponseEntity<CartResponse> getCart(
+			@PathVariable String email,
+			@PathVariable Long cartId
+	) {
+		return ResponseEntity.ok(
+				cartService.getCart(
+						email,
+						cartId
+				)
+		);
 	}
-	
-	@GetMapping("/public/users/{emailId}/carts/{cartId}")
-	public ResponseEntity<CartDTO> getCartById(@PathVariable String emailId, @PathVariable Long cartId) {
-		CartDTO cartDTO = cartService.getCart(emailId, cartId);
-		
-		return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.FOUND);
+
+	@PutMapping("/{cartId}/products/{productId}")
+	public ResponseEntity<CartResponse> updateQuantity(
+			@PathVariable Long cartId,
+			@PathVariable Long productId,
+			@RequestParam Integer quantity
+	) {
+		return ResponseEntity.ok(
+				cartService.updateCartItemQuantity(
+						cartId,
+						productId,
+						quantity
+				)
+		);
 	}
-	
-	@PutMapping("/public/carts/{cartId}/products/{productId}/quantity/{quantity}")
-	public ResponseEntity<CartDTO> updateCartProduct(@PathVariable Long cartId, @PathVariable Long productId, @PathVariable Integer quantity) {
-		CartDTO cartDTO = cartService.updateProductQuantityInCart(cartId, productId, quantity);
-		
-		return new ResponseEntity<CartDTO>(cartDTO, HttpStatus.OK);
+
+	@DeleteMapping("/{cartId}/products/{productId}")
+	public ResponseEntity<Void> removeProduct(
+			@PathVariable Long cartId,
+			@PathVariable Long productId
+	) {
+
+		cartService.removeProductFromCart(
+				cartId,
+				productId
+		);
+
+		return ResponseEntity.noContent().build();
 	}
-	
-	@DeleteMapping("/public/carts/{cartId}/product/{productId}")
-	public ResponseEntity<String> deleteProductFromCart(@PathVariable Long cartId, @PathVariable Long productId) {
-		String status = cartService.deleteProductFromCart(cartId, productId);
-		
-		return new ResponseEntity<String>(status, HttpStatus.OK);
-	}
+
+
 }

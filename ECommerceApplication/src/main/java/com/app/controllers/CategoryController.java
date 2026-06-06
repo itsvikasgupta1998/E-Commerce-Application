@@ -1,6 +1,10 @@
 package com.app.controllers;
 
-import org.springframework.beans.factory.annotation.Autowired;
+
+import com.app.payloads.CategoryPageResponse;
+import com.app.payloads.UpdateCategoryRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,56 +16,87 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.app.config.AppConstants;
-import com.app.entites.Category;
-import com.app.payloads.CategoryDTO;
+import com.app.payloads.CreateCategoryRequest;
 import com.app.payloads.CategoryResponse;
 import com.app.services.CategoryService;
-
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
-@SecurityRequirement(name = "E-Commerce Application")
+@RequestMapping("/api/categories")
+@RequiredArgsConstructor
+@Tag(name = "Category APIs")
 public class CategoryController {
 
-	@Autowired
-	private CategoryService categoryService;
+	private final CategoryService categoryService;
 
-	@PostMapping("/admin/category")
-	public ResponseEntity<CategoryDTO> createCategory(@Valid @RequestBody Category category) {
-		CategoryDTO savedCategoryDTO = categoryService.createCategory(category);
+	@PostMapping
+	public ResponseEntity<CategoryResponse> createCategory(
+			@Valid @RequestBody CreateCategoryRequest request
+	) {
 
-		return new ResponseEntity<CategoryDTO>(savedCategoryDTO, HttpStatus.CREATED);
+		return ResponseEntity
+				.status(HttpStatus.CREATED)
+				.body(
+						categoryService.createCategory(request)
+				);
 	}
 
-	@GetMapping("/public/categories")
-	public ResponseEntity<CategoryResponse> getCategories(
-			@RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
-			@RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
-			@RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_CATEGORIES_BY, required = false) String sortBy,
-			@RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder) {
-		
-		CategoryResponse categoryResponse = categoryService.getCategories(pageNumber, pageSize, sortBy, sortOrder);
+	@GetMapping("/{categoryId}")
+	public ResponseEntity<CategoryResponse> getCategory(
+			@PathVariable Long categoryId
+	) {
 
-		return new ResponseEntity<CategoryResponse>(categoryResponse, HttpStatus.FOUND);
+		return ResponseEntity.ok(
+				categoryService.getCategoryById(categoryId)
+		);
 	}
 
-	@PutMapping("/admin/categories/{categoryId}")
-	public ResponseEntity<CategoryDTO> updateCategory(@RequestBody Category category,
-			@PathVariable Long categoryId) {
-		CategoryDTO categoryDTO = categoryService.updateCategory(category, categoryId);
+	@GetMapping
+	public ResponseEntity<CategoryPageResponse> getCategories(
+			@RequestParam(defaultValue = "0")
+			int page,
 
-		return new ResponseEntity<CategoryDTO>(categoryDTO, HttpStatus.OK);
+			@RequestParam(defaultValue = "10")
+			int size,
+
+			@RequestParam(defaultValue = "categoryId")
+			String sortBy,
+
+			@RequestParam(defaultValue = "asc")
+			String sortDir
+	) {
+
+		return ResponseEntity.ok(
+				categoryService.getAllCategories(
+						page,
+						size,
+						sortBy,
+						sortDir
+				)
+		);
 	}
 
-	@DeleteMapping("/admin/categories/{categoryId}")
-	public ResponseEntity<String> deleteCategory(@PathVariable Long categoryId) {
-		String status = categoryService.deleteCategory(categoryId);
+	@PutMapping("/{categoryId}")
+	public ResponseEntity<CategoryResponse> updateCategory(
+			@PathVariable Long categoryId,
+			@Valid @RequestBody UpdateCategoryRequest request
+	) {
 
-		return new ResponseEntity<String>(status, HttpStatus.OK);
+		return ResponseEntity.ok(
+				categoryService.updateCategory(
+						categoryId,
+						request
+				)
+		);
 	}
 
+	@DeleteMapping("/{categoryId}")
+	public ResponseEntity<Void> deleteCategory(
+			@PathVariable Long categoryId
+	) {
+
+		categoryService.deleteCategory(categoryId);
+
+		return ResponseEntity.noContent().build();
+	}
 }

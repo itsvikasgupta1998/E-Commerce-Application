@@ -1,69 +1,59 @@
 package com.app.controllers;
 
-import java.util.Collections;
-import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.payloads.AuthResponse;
+import com.app.payloads.LoginRequest;
+import com.app.services.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.app.exceptions.UserNotFoundException;
-import com.app.payloads.LoginCredentials;
-import com.app.payloads.UserDTO;
-import com.app.security.JWTUtil;
-import com.app.services.UserService;
-
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.web.bind.annotation.*;
+import com.app.payloads.UserRegistrationRequest;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api")
-@SecurityRequirement(name = "E-Commerce Application")
+@RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-	@Autowired
-	private UserService userService;
-
-	@Autowired
-	private JWTUtil jwtUtil;
-
-	@Autowired
-	private AuthenticationManager authenticationManager;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	private final AuthService authService;
 
 	@PostMapping("/register")
-	public ResponseEntity<Map<String, Object>> registerHandler(@Valid @RequestBody UserDTO user) throws UserNotFoundException {
-		String encodedPass = passwordEncoder.encode(user.getPassword());
+	public ResponseEntity<AuthResponse> register(
+			@Valid @RequestBody UserRegistrationRequest request
+	) {
 
-		user.setPassword(encodedPass);
-
-		UserDTO userDTO = userService.registerUser(user);
-
-		String token = jwtUtil.generateToken(userDTO.getEmail());
-
-		return new ResponseEntity<Map<String, Object>>(Collections.singletonMap("jwt-token", token),
-				HttpStatus.CREATED);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(authService.register(request));
 	}
 
 	@PostMapping("/login")
-	public Map<String, Object> loginHandler(@Valid @RequestBody LoginCredentials credentials) {
+	public ResponseEntity<AuthResponse> login(
+			@Valid @RequestBody LoginRequest request
+	) {
 
-		UsernamePasswordAuthenticationToken authCredentials = new UsernamePasswordAuthenticationToken(
-				credentials.getEmail(), credentials.getPassword());
+		return ResponseEntity.ok(
+				authService.login(request)
+		);
+	}
 
-		authenticationManager.authenticate(authCredentials);
+	@PostMapping("/refresh")
+	public ResponseEntity<AuthResponse> refresh(
+			@RequestParam String refreshToken
+	) {
 
-		String token = jwtUtil.generateToken(credentials.getEmail());
+		return ResponseEntity.ok(
+				authService.refreshToken(refreshToken)
+		);
+	}
 
-		return Collections.singletonMap("jwt-token", token);
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(
+			@RequestParam String refreshToken
+	) {
+
+		authService.logout(refreshToken);
+
+		return ResponseEntity.noContent().build();
 	}
 }

@@ -1,204 +1,302 @@
 package com.app.services;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.UUID;
+import com.app.entites.*;
+import com.app.mappers.OrderMapper;
+import com.app.payloads.OrderPageResponse;
+import com.app.payloads.PlaceOrderRequest;
+import com.app.payloads.UpdateOrderStatusRequest;
+import com.app.repositories.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
-import com.app.entites.Cart;
-import com.app.entites.CartItem;
-import com.app.entites.Order;
-import com.app.entites.OrderItem;
-import com.app.entites.Payment;
-import com.app.entites.Product;
-import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
-import com.app.payloads.OrderDTO;
-import com.app.payloads.OrderItemDTO;
 import com.app.payloads.OrderResponse;
-import com.app.repositories.CartItemRepo;
-import com.app.repositories.CartRepo;
-import com.app.repositories.OrderItemRepo;
-import com.app.repositories.OrderRepo;
-import com.app.repositories.PaymentRepo;
-import com.app.repositories.UserRepo;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
-
-@Transactional
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class OrderServiceImpl implements OrderService {
 
-	@Autowired
-	public UserRepo userRepo;
 
-	@Autowired
-	public CartRepo cartRepo;
-
-	@Autowired
-	public OrderRepo orderRepo;
-
-	@Autowired
-	private PaymentRepo paymentRepo;
-
-	@Autowired
-	public OrderItemRepo orderItemRepo;
-
-	@Autowired
-	public CartItemRepo cartItemRepo;
-
-	@Autowired
-	public UserService userService;
-
-	@Autowired
-	public CartService cartService;
-
-	@Autowired
-	public ModelMapper modelMapper;
+	private final OrderRepository orderRepository;
+	private final UserRepository userRepository;
+	private final OrderItemRepository orderItemRepository;
+	private final CartRepository cartRepository;
+	private final ProductRepository productRepository;
+	private final PaymentRepository paymentRepository;
+	private final OrderMapper orderMapper;
 
 	@Override
-	public OrderDTO placeOrder(String emailId, Long cartId, String paymentMethod) {
+	public OrderResponse createOrder(
+			String email,
+			PlaceOrderRequest request
+	) {
 
-		Cart cart = cartRepo.findCartByEmailAndCartId(emailId, cartId);
+		Cart cart =
+				cartRepository.findCartByUserEmailAndCartId(
+								email,
+								request.getCartId()
+						)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Cart",
+										"cartId",
+										request.getCartId()
+								)
+						);
 
-		if (cart == null) {
-			throw new ResourceNotFoundException("Cart", "cartId", cartId);
+
+		if (cart.getCartItems() == null ||
+				cart.getCartItems().isEmpty()) {
+
+			throw new IllegalStateException(
+					"Cart is empty"
+			);
 		}
 
 		Order order = new Order();
 
-		order.setEmail(emailId);
+		User user =
+				userRepository.findByEmail(email)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"User",
+										"email",
+										email
+								));
+
+		order.setUser(user);
 		order.setOrderDate(LocalDate.now());
-
 		order.setTotalAmount(cart.getTotalPrice());
-		order.setOrderStatus("Order Accepted !");
+		order.setOrderStatus(OrderStatus.PLACED);
 
-		Payment payment = new Payment();
-		payment.setOrder(order);
-		payment.setPaymentMethod(paymentMethod);
+		Order savedOrder =
+				orderRepository.save(order);
 
-		payment = paymentRepo.save(payment);
+		List<OrderItem> orderItems =
+				new ArrayList<>();
 
-		order.setPayment(payment);
+		for (CartItem cartItem : cart.getCartItems()) {
 
-		Order savedOrder = orderRepo.save(order);
+			Product product =
+					cartItem.getProduct();
 
-		List<CartItem> cartItems = cart.getCartItems();
+			if (product.getQuantity() <
+					cartItem.getQuantity()) {
 
-		if (cartItems.size() == 0) {
-			throw new APIException("Cart is empty");
-		}
+				throw new IllegalStateException(
+						"Insufficient stock for product: "
+								+ product.getProductName()
+				);
+			}
 
-		List<OrderItem> orderItems = new ArrayList<>();
+			product.setQuantity(
+					product.getQuantity()
+							- cartItem.getQuantity()
+			);
 
-		for (CartItem cartItem : cartItems) {
-			OrderItem orderItem = new OrderItem();
+			productRepository.save(product);
 
-			orderItem.setProduct(cartItem.getProduct());
-			orderItem.setQuantity(cartItem.getQuantity());
-			orderItem.setDiscount(cartItem.getDiscount());
-			orderItem.setOrderedProductPrice(cartItem.getProductPrice());
+			OrderItem orderItem =
+					new OrderItem();
+
 			orderItem.setOrder(savedOrder);
+			orderItem.setProduct(product);
+
+			orderItem.setQuantity(
+					cartItem.getQuantity()
+			);
+
+			orderItem.setDiscount(
+					cartItem.getDiscount()
+			);
+
+			orderItem.setOrderedProductPrice(
+					cartItem.getProductPrice()
+			);
 
 			orderItems.add(orderItem);
 		}
 
-		orderItems = orderItemRepo.saveAll(orderItems);
+		orderItems =
+				orderItemRepository.saveAll(
+						orderItems
+				);
 
-		cart.getCartItems().forEach(item -> {
-			int quantity = item.getQuantity();
+		Payment payment =
+				Payment.builder()
+						.order(savedOrder)
+						.amount(
+								savedOrder.getTotalAmount()
+						)
+						.paymentMethod(
+								request.getPaymentMethod()
+						)
+						.paymentStatus(
+								PaymentStatus.PENDING
+						)
+						.transactionId(
+								UUID.randomUUID()
+										.toString()
+						)
+						.gatewayName("INTERNAL")
+						.gatewayResponse(
+								"PAYMENT_INITIATED"
+						)
+						.build();
 
-			Product product = item.getProduct();
+		payment =
+				paymentRepository.save(payment);
 
-			cartService.deleteProductFromCart(cartId, item.getProduct().getProductId());
+		savedOrder.setPayment(payment);
+		savedOrder.setOrderItems(orderItems);
 
-			product.setQuantity(product.getQuantity() - quantity);
-		});
+		cart.getCartItems().clear();
+		cart.setTotalPrice(BigDecimal.ZERO);
 
-		OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
-		
-		orderItems.forEach(item -> orderDTO.getOrderItems().add(modelMapper.map(item, OrderItemDTO.class)));
+		cartRepository.save(cart);
 
-		return orderDTO;
+		return orderMapper.toResponse(
+				savedOrder
+		);
 	}
 
 	@Override
-	public List<OrderDTO> getOrdersByUser(String emailId) {
-		List<Order> orders = orderRepo.findAllByEmail(emailId);
+	@Transactional(readOnly = true)
+	public OrderResponse getOrderById(
+			Long orderId
+	) {
 
-		List<OrderDTO> orderDTOs = orders.stream().map(order -> modelMapper.map(order, OrderDTO.class))
-				.collect(Collectors.toList());
+		Order order =
+				orderRepository.findById(orderId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Order",
+										"orderId",
+										orderId
+								));
 
-		if (orderDTOs.size() == 0) {
-			throw new APIException("No orders placed yet by the user with email: " + emailId);
-		}
-
-		return orderDTOs;
+		return orderMapper.toResponse(order);
 	}
 
 	@Override
-	public OrderDTO getOrder(String emailId, Long orderId) {
+	@Transactional(readOnly = true)
+	public OrderPageResponse getAllOrders(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	) {
 
-		Order order = orderRepo.findOrderByEmailAndOrderId(emailId, orderId);
+		Sort sort =
+				sortDir.equalsIgnoreCase("desc")
+						? Sort.by(sortBy).descending()
+						: Sort.by(sortBy).ascending();
 
-		if (order == null) {
-			throw new ResourceNotFoundException("Order", "orderId", orderId);
-		}
+		Page<Order> orderPage =
+				orderRepository.findAll(
+						PageRequest.of(
+								page,
+								size,
+								sort
+						)
+				);
 
-		return modelMapper.map(order, OrderDTO.class);
+		return OrderPageResponse.builder()
+				.content(
+						orderPage.getContent()
+								.stream()
+								.map(orderMapper::toResponse)
+								.toList()
+				)
+				.pageNumber(
+						orderPage.getNumber()
+				)
+				.pageSize(
+						orderPage.getSize()
+				)
+				.totalElements(
+						orderPage.getTotalElements()
+				)
+				.totalPages(
+						orderPage.getTotalPages()
+				)
+				.lastPage(
+						orderPage.isLast()
+				)
+				.build();
 	}
 
 	@Override
-	public OrderResponse getAllOrders(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+	@Transactional(readOnly = true)
+	public OrderPageResponse getOrdersByUser(
+			String email,
+			int page,
+			int size
+	) {
 
-		Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending()
-				: Sort.by(sortBy).descending();
+		Page<Order> orderPage =
+				orderRepository.findByUser_Email(
+						email,
+						PageRequest.of(page, size)
+				);
 
-		Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
-
-		Page<Order> pageOrders = orderRepo.findAll(pageDetails);
-
-		List<Order> orders = pageOrders.getContent();
-
-		List<OrderDTO> orderDTOs = orders.stream().map(order -> modelMapper.map(order, OrderDTO.class))
-				.collect(Collectors.toList());
-		
-		if (orderDTOs.size() == 0) {
-			throw new APIException("No orders placed yet by the users");
-		}
-
-		OrderResponse orderResponse = new OrderResponse();
-		
-		orderResponse.setContent(orderDTOs);
-		orderResponse.setPageNumber(pageOrders.getNumber());
-		orderResponse.setPageSize(pageOrders.getSize());
-		orderResponse.setTotalElements(pageOrders.getTotalElements());
-		orderResponse.setTotalPages(pageOrders.getTotalPages());
-		orderResponse.setLastPage(pageOrders.isLast());
-		
-		return orderResponse;
+		return OrderPageResponse.builder()
+				.content(
+						orderPage.getContent()
+								.stream()
+								.map(orderMapper::toResponse)
+								.toList()
+				)
+				.pageNumber(
+						orderPage.getNumber()
+				)
+				.pageSize(
+						orderPage.getSize()
+				)
+				.totalElements(
+						orderPage.getTotalElements()
+				)
+				.totalPages(
+						orderPage.getTotalPages()
+				)
+				.lastPage(
+						orderPage.isLast()
+				)
+				.build();
 	}
 
 	@Override
-	public OrderDTO updateOrder(String emailId, Long orderId, String orderStatus) {
+	public OrderResponse updateOrderStatus(
+			Long orderId,
+			UpdateOrderStatusRequest request
+	) {
 
-		Order order = orderRepo.findOrderByEmailAndOrderId(emailId, orderId);
+		Order order =
+				orderRepository.findById(orderId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Order",
+										"orderId",
+										orderId
+								));
 
-		if (order == null) {
-			throw new ResourceNotFoundException("Order", "orderId", orderId);
-		}
+		order.setOrderStatus(request.getOrderStatus());
 
-		order.setOrderStatus(orderStatus);
+		Order updatedOrder = orderRepository.save(order);
 
-		return modelMapper.map(order, OrderDTO.class);
+		return orderMapper.toResponse(
+				updatedOrder
+		);
 	}
+
 
 }

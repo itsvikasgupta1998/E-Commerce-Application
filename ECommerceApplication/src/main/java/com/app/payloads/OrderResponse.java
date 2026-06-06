@@ -1,21 +1,22 @@
 package com.app.payloads;
 
+import com.app.entites.OrderStatus;
+import lombok.*;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderResponse {
 
-	private List<OrderDTO> content;
-	private Integer pageNumber;
-	private Integer pageSize;
-	private Long totalElements;
-	private Integer totalPages;
-	private boolean lastPage;
-	
+	private Long orderId;
+	private String email;
+	private LocalDate orderDate;
+	private BigDecimal totalAmount;
+	private OrderStatus orderStatus;
+	private PaymentResponse payment;
+	private List<OrderItemResponse> orderItems;
 }

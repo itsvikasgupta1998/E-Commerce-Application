@@ -1,125 +1,122 @@
 package com.app.services;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.app.mappers.AddressMapper;
+import com.app.payloads.AddressRequest;
+import com.app.payloads.AddressResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import com.app.entites.Address;
-import com.app.entites.User;
-import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
-import com.app.payloads.AddressDTO;
-import com.app.repositories.AddressRepo;
-import com.app.repositories.UserRepo;
+import com.app.repositories.AddressRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-import jakarta.transaction.Transactional;
-
-@Transactional
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class AddressServiceImpl implements AddressService {
 
-	@Autowired
-	private AddressRepo addressRepo;
-
-	@Autowired
-	private UserRepo userRepo;
-
-	@Autowired
-	private ModelMapper modelMapper;
+	private final AddressRepository addressRepository;
+	private final AddressMapper addressMapper;
 
 	@Override
-	public AddressDTO createAddress(AddressDTO addressDTO) {
+	public AddressResponse createAddress(
+			AddressRequest request
+	) {
 
-		String country = addressDTO.getCountry();
-		String state = addressDTO.getState();
-		String city = addressDTO.getCity();
-		String pincode = addressDTO.getPincode();
-		String street = addressDTO.getStreet();
-		String buildingName = addressDTO.getBuildingName();
+		addressRepository
+				.findByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(
+						request.getCountry(),
+						request.getState(),
+						request.getCity(),
+						request.getPincode(),
+						request.getStreet(),
+						request.getBuildingName()
+				)
+				.ifPresent(address -> {
+					throw new IllegalStateException(
+							"Address already exists"
+					);
+				});
 
-		Address addressFromDB = addressRepo.findByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(country,
-				state, city, pincode, street, buildingName);
+		Address address =
+				addressMapper.toEntity(request);
 
-		if (addressFromDB != null) {
-			throw new APIException("Address already exists with addressId: " + addressFromDB.getAddressId());
-		}
+		Address saved =
+				addressRepository.save(address);
 
-		Address address = modelMapper.map(addressDTO, Address.class);
-
-		Address savedAddress = addressRepo.save(address);
-
-		return modelMapper.map(savedAddress, AddressDTO.class);
+		return addressMapper.toResponse(saved);
 	}
 
 	@Override
-	public List<AddressDTO> getAddresses() {
-		List<Address> addresses = addressRepo.findAll();
+	@Transactional(readOnly = true)
+	public AddressResponse getAddressById(
+			Long addressId
+	) {
 
-		List<AddressDTO> addressDTOs = addresses.stream().map(address -> modelMapper.map(address, AddressDTO.class))
-				.collect(Collectors.toList());
+		Address address =
+				addressRepository.findById(addressId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Address",
+										"addressId",
+										addressId
+								));
 
-		return addressDTOs;
+		return addressMapper.toResponse(address);
 	}
 
 	@Override
-	public AddressDTO getAddress(Long addressId) {
-		Address address = addressRepo.findById(addressId)
-				.orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+	@Transactional(readOnly = true)
+	public List<AddressResponse> getAllAddresses() {
 
-		return modelMapper.map(address, AddressDTO.class);
+		return addressRepository.findAll()
+				.stream()
+				.map(addressMapper::toResponse)
+				.toList();
 	}
 
 	@Override
-	public AddressDTO updateAddress(Long addressId, Address address) {
-		Address addressFromDB = addressRepo.findByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(
-				address.getCountry(), address.getState(), address.getCity(), address.getPincode(), address.getStreet(),
-				address.getBuildingName());
+	public AddressResponse updateAddress(
+			Long addressId,
+			AddressRequest request
+	) {
 
-		if (addressFromDB == null) {
-			addressFromDB = addressRepo.findById(addressId)
-					.orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+		Address address =
+				addressRepository.findById(addressId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Address",
+										"addressId",
+										addressId
+								));
 
-			addressFromDB.setCountry(address.getCountry());
-			addressFromDB.setState(address.getState());
-			addressFromDB.setCity(address.getCity());
-			addressFromDB.setPincode(address.getPincode());
-			addressFromDB.setStreet(address.getStreet());
-			addressFromDB.setBuildingName(address.getBuildingName());
+		addressMapper.updateEntity(
+				request,
+				address
+		);
 
-			Address updatedAddress = addressRepo.save(addressFromDB);
+		Address updated =
+				addressRepository.save(address);
 
-			return modelMapper.map(updatedAddress, AddressDTO.class);
-		} else {
-			List<User> users = userRepo.findByAddress(addressId);
-			final Address a = addressFromDB;
-
-			users.forEach(user -> user.getAddresses().add(a));
-
-			deleteAddress(addressId);
-
-			return modelMapper.map(addressFromDB, AddressDTO.class);
-		}
+		return addressMapper.toResponse(updated);
 	}
 
 	@Override
-	public String deleteAddress(Long addressId) {
-		Address addressFromDB = addressRepo.findById(addressId)
-				.orElseThrow(() -> new ResourceNotFoundException("Address", "addressId", addressId));
+	public void deleteAddress(
+			Long addressId
+	) {
 
-		List<User> users = userRepo.findByAddress(addressId);
+		Address address =
+				addressRepository.findById(addressId)
+						.orElseThrow(() ->
+								new ResourceNotFoundException(
+										"Address",
+										"addressId",
+										addressId
+								));
 
-		users.forEach(user -> {
-			user.getAddresses().remove(addressFromDB);
-
-			userRepo.save(user);
-		});
-
-		addressRepo.deleteById(addressId);
-
-		return "Address deleted succesfully with addressId: " + addressId;
+		addressRepository.delete(address);
 	}
-
 }

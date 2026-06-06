@@ -1,19 +1,28 @@
 package com.app.services;
 
+import com.app.payloads.AddressRequest;
+import com.app.payloads.AddressResponse;
 import java.util.List;
 
-import com.app.entites.Address;
-import com.app.payloads.AddressDTO;
 
 public interface AddressService {
-	
-	AddressDTO createAddress(AddressDTO addressDTO);
-	
-	List<AddressDTO> getAddresses();
-	
-	AddressDTO getAddress(Long addressId);
-	
-	AddressDTO updateAddress(Long addressId, Address address);
-	
-	String deleteAddress(Long addressId);
+
+	AddressResponse createAddress(
+			AddressRequest request
+	);
+
+	AddressResponse getAddressById(
+			Long addressId
+	);
+
+	List<AddressResponse> getAllAddresses();
+
+	AddressResponse updateAddress(
+			Long addressId,
+			AddressRequest request
+	);
+
+	void deleteAddress(
+			Long addressId
+	);
 }

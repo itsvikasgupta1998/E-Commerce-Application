@@ -1,34 +1,45 @@
 package com.app.entites;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+
+
 
 @Entity
-@Data
 @Table(name = "payments")
-@AllArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor
-public class Payment {
+@AllArgsConstructor
+@Builder
+public class Payment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long paymentId;
 
-	@OneToOne(mappedBy = "payment", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+	@Column(nullable = false, unique = true, length = 100)
+	private String transactionId;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 30)
+	private PaymentMethod paymentMethod;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 30)
+	private PaymentStatus paymentStatus;
+
+	@Column(nullable = false, precision = 19, scale = 2)
+	private BigDecimal amount;
+
+	@Column(length = 100)
+	private String gatewayName;
+
+	@Column(length = 255)
+	private String gatewayResponse;
+
+	@OneToOne
+	@JoinColumn(name = "order_id")
 	private Order order;
-
-	@NotBlank
-	@Size(min = 4, message = "Payment method must contain atleast 4 characters")
-	private String paymentMethod;
-
 }

@@ -1,16 +1,34 @@
 package com.app.services;
 
-import com.app.entites.Category;
-import com.app.payloads.CategoryDTO;
+
+import com.app.payloads.CategoryPageResponse;
+import com.app.payloads.CreateCategoryRequest;
 import com.app.payloads.CategoryResponse;
+import com.app.payloads.UpdateCategoryRequest;
 
 public interface CategoryService {
 
-	CategoryDTO createCategory(Category category);
+	CategoryResponse createCategory(
+			CreateCategoryRequest request
+	);
 
-	CategoryResponse getCategories(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+	CategoryResponse getCategoryById(
+			Long categoryId
+	);
 
-	CategoryDTO updateCategory(Category category, Long categoryId);
+	CategoryPageResponse getAllCategories(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	);
 
-	String deleteCategory(Long categoryId);
+	CategoryResponse updateCategory(
+			Long categoryId,
+			UpdateCategoryRequest request
+	);
+
+	void deleteCategory(
+			Long categoryId
+	);
 }

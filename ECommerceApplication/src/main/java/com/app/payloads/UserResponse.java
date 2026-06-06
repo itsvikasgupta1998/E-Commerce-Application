@@ -1,21 +1,36 @@
 package com.app.payloads;
 
-import java.util.List;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Set;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserResponse {
-	
-	private List<UserDTO> content;
-	private Integer pageNumber;
-	private Integer pageSize;
-	private Long totalElements;
-	private Integer totalPages;
-	private boolean lastPage;
-	
+
+	private Long userId;
+
+	private String firstName;
+
+	private String lastName;
+
+	private String mobileNumber;
+
+	private String email;
+
+	private Set<RoleResponse> roles;
+
+	private List<AddressResponse> addresses;
+
+	private CartResponse cart;
+
+	private LocalDateTime createdAt;
+
+	private LocalDateTime updatedAt;
+
+
 }

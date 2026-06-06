@@ -1,16 +1,27 @@
 package com.app.services;
 
-import com.app.payloads.UserDTO;
+import com.app.payloads.UserRegistrationRequest;
+import com.app.payloads.UserUpdateRequest;
 import com.app.payloads.UserResponse;
+import org.springframework.data.domain.Page;
 
 public interface UserService {
-	UserDTO registerUser(UserDTO userDTO);
-	
-	UserResponse getAllUsers(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
-	
-	UserDTO getUserById(Long userId);
-	
-	UserDTO updateUser(Long userId, UserDTO userDTO);
-	
-	String deleteUser(Long userId);
+
+	UserResponse registerUser(UserRegistrationRequest request);
+
+	UserResponse getUserById(Long userId);
+
+	UserResponse updateUser(
+			Long userId,
+			UserUpdateRequest request
+	);
+
+	void deleteUser(Long userId);
+
+	Page<UserResponse> getAllUsers(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	);
 }

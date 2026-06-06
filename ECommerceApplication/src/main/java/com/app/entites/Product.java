@@ -1,58 +1,73 @@
 package com.app.entites;
 
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
+import lombok.*;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 
 @Entity
-@Table(name = "products")
-@Data
+@Table(
+		name = "products",
+		indexes = {
+				@Index(
+						name = "idx_product_name",
+						columnList = "product_name"
+				),
+				@Index(
+						name = "idx_category",
+						columnList = "category_id"
+				),
+				@Index(
+						name = "idx_sku",
+						columnList = "sku"
+				)
+		}
+)
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Product {
+@Builder
+public class Product extends BaseEntity {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long productId;
 
-	@NotBlank
-	@Size(min = 3, message = "Product name must contain atleast 3 characters")
+	@Column(nullable = false,length = 200)
 	private String productName;
-	
-	private String image;
-	
-	@NotBlank
-	@Size(min = 6, message = "Product description must contain atleast 6 characters")
+
+	@Column(nullable = false,length = 1000)
 	private String description;
-	
+
+	@Column(nullable = false)
 	private Integer quantity;
-	private double price;
-	private double discount;
-	private double specialPrice;
 
-	@ManyToOne
-	@JoinColumn(name = "category_id")
+	@Column(nullable = false,precision = 19,scale = 2)
+	private BigDecimal price;
+
+	@Column(nullable = false,precision = 5,scale = 2)
+	private BigDecimal discount;
+
+	@Column(nullable = false,precision = 19,scale = 2)
+	private BigDecimal specialPrice;
+
+	@Column(
+			nullable = false,
+			unique = true,
+			length = 50
+	)
+	private String sku;
+
+	@Column(nullable = false)
+	private String image;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(
+			name = "category_id",
+			nullable = false
+	)
 	private Category category;
-	
-	@OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
-	private List<CartItem> products = new ArrayList<>();
-	
-	@OneToMany(mappedBy = "product", cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-	private List<OrderItem> orderItems = new ArrayList<>();
-
 }
+
+

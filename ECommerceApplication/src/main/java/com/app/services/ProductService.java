@@ -1,29 +1,54 @@
 package com.app.services;
 
 import java.io.IOException;
-
+import com.app.payloads.ProductPageResponse;
+import com.app.payloads.UpdateProductRequest;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.app.entites.Product;
-import com.app.payloads.ProductDTO;
+import com.app.payloads.CreateProductRequest;
 import com.app.payloads.ProductResponse;
+
 
 public interface ProductService {
 
-	ProductDTO addProduct(Long categoryId, Product product);
+	ProductResponse createProduct(
+			Long categoryId,
+			CreateProductRequest request
+	);
 
-	ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder);
+	ProductResponse getProductById(Long productId);
 
-	ProductResponse searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy,
-			String sortOrder);
+	ProductResponse updateProduct(
+			Long productId,
+			UpdateProductRequest request
+	);
 
-	ProductDTO updateProduct(Long productId, Product product);
+	ProductResponse updateProductImage(
+			Long productId,
+			MultipartFile image
+	) throws IOException;
 
-	ProductDTO updateProductImage(Long productId, MultipartFile image) throws IOException;
+	void deleteProduct(Long productId);
 
-	ProductResponse searchProductByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortBy,
-			String sortOrder);
+	ProductPageResponse getAllProducts(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	);
 
-	String deleteProduct(Long productId);
+	ProductPageResponse getProductsByCategory(
+			Long categoryId,
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	);
 
+	ProductPageResponse searchProducts(
+			String keyword,
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	);
 }
