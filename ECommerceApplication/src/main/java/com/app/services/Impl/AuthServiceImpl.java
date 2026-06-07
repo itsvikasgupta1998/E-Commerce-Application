@@ -1,4 +1,4 @@
-package com.app.services;
+package com.app.services.Impl;
 
 import com.app.config.UserInfoConfig;
 import com.app.entites.RefreshToken;
@@ -6,26 +6,26 @@ import com.app.entites.User;
 import com.app.payloads.*;
 import com.app.repositories.UserRepository;
 import com.app.security.JwtService;
+import com.app.services.AuthService;
+import com.app.services.RefreshTokenService;
+import com.app.services.UserService;
 import lombok.RequiredArgsConstructor;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
     private final UserService userService;
-
     private final UserRepository userRepository;
-
     private final JwtService jwtService;
-
     private final RefreshTokenService refreshTokenService;
-
     private final AuthenticationManager authenticationManager;
 
     @Value("${jwt.access-token-expiration}")
@@ -36,6 +36,11 @@ public class AuthServiceImpl implements AuthService {
             UserRegistrationRequest request
     ) {
 
+        log.info(
+                "User registration started for email={}",
+                request.getEmail()
+        );
+
         UserResponse userResponse =
                 userService.registerUser(request);
 
@@ -43,7 +48,17 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.findByEmail(
                                 userResponse.getEmail()
                         )
-                        .orElseThrow();
+                        .orElseThrow(() -> {
+
+                            log.error(
+                                    "Registered user not found in database. email={}",
+                                    userResponse.getEmail()
+                            );
+
+                            return new RuntimeException(
+                                    "User retrieval failed after registration"
+                            );
+                        });
 
         UserDetails userDetails =
                 new UserInfoConfig(user);
@@ -56,6 +71,12 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken refreshToken =
                 refreshTokenService
                         .createRefreshToken(user);
+
+        log.info(
+                "User registered successfully. userId={}, email={}",
+                user.getUserId(),
+                user.getEmail()
+        );
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
@@ -70,6 +91,11 @@ public class AuthServiceImpl implements AuthService {
             LoginRequest request
     ) {
 
+        log.info(
+                "Login attempt for email={}",
+                request.getEmail()
+        );
+
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -81,7 +107,17 @@ public class AuthServiceImpl implements AuthService {
                 userRepository.findByEmail(
                                 request.getEmail()
                         )
-                        .orElseThrow();
+                        .orElseThrow(() -> {
+
+                            log.warn(
+                                    "Login failed. User not found. email={}",
+                                    request.getEmail()
+                            );
+
+                            return new RuntimeException(
+                                    "User not found"
+                            );
+                        });
 
         UserDetails userDetails =
                 new UserInfoConfig(user);
@@ -95,6 +131,12 @@ public class AuthServiceImpl implements AuthService {
                 refreshTokenService
                         .createRefreshToken(user);
 
+        log.info(
+                "Login successful. userId={}, email={}",
+                user.getUserId(),
+                user.getEmail()
+        );
+
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
@@ -107,6 +149,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse refreshToken(
             String refreshTokenValue
     ) {
+
+        log.info(
+                "Refresh token request received"
+        );
 
         RefreshToken refreshToken =
                 refreshTokenService
@@ -125,6 +171,12 @@ public class AuthServiceImpl implements AuthService {
                         userDetails
                 );
 
+        log.info(
+                "Access token refreshed successfully. userId={}, email={}",
+                user.getUserId(),
+                user.getEmail()
+        );
+
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
@@ -138,7 +190,15 @@ public class AuthServiceImpl implements AuthService {
             String refreshToken
     ) {
 
+        log.info(
+                "Logout request received"
+        );
+
         refreshTokenService
                 .revokeToken(refreshToken);
+
+        log.info(
+                "Logout successful"
+        );
     }
 }

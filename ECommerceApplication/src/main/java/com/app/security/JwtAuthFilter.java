@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,12 +14,13 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthFilter
-        extends OncePerRequestFilter {
+@Slf4j
+public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -25,37 +28,57 @@ public class JwtAuthFilter
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader =
-                request.getHeader(SecurityConstants.HEADER);
+        String requestURI = request.getRequestURI();
+        String authHeader = request.getHeader(SecurityConstants.HEADER);
 
-        if(authHeader == null ||
-                !authHeader.startsWith(
-                        SecurityConstants.TOKEN_PREFIX
-                )) {
+        log.info("Incoming request: {} {}", request.getMethod(), requestURI);
 
-            filterChain.doFilter(request,response);
+        // ---------------- NO TOKEN CASE ----------------
+        if (authHeader == null || !authHeader.startsWith(SecurityConstants.TOKEN_PREFIX)) {
+            log.debug("No JWT token found in request: {}", requestURI);
+            filterChain.doFilter(request, response);
             return;
         }
 
-        String token =
-                authHeader.substring(7);
+        String token = authHeader.substring(7);
+        String username;
 
-        String username =
-                jwtService.extractUsername(token);
+        try {
+            username = jwtService.extractUsername(token);
+            log.debug("JWT token parsed successfully for request: {}", requestURI);
+        }
+        catch (Exception ex) {
 
-        if(username != null &&
-                SecurityContextHolder.getContext()
-                        .getAuthentication() == null){
+            log.warn("Invalid or expired JWT token for request: {} | Error: {}",
+                    requestURI, ex.getMessage());
+
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+
+            response.getWriter().write("""
+            {
+              "success": false,
+              "message": "Invalid or Expired Token"
+            }
+            """);
+
+            return;
+        }
+
+        // ---------------- AUTHENTICATION FLOW ----------------
+        if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            log.debug("Loading user details for username: {}", username);
 
             UserDetails userDetails =
-                    userDetailsService
-                            .loadUserByUsername(username);
+                    userDetailsService.loadUserByUsername(username);
 
-            if(jwtService.isTokenValid(token,userDetails)){
+            if (jwtService.isTokenValid(token, userDetails)) {
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
@@ -63,16 +86,21 @@ public class JwtAuthFilter
                                 null,
                                 userDetails.getAuthorities()
                         );
+
                 authToken.setDetails(
                         new WebAuthenticationDetailsSource()
                                 .buildDetails(request)
                 );
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authToken);
+
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                log.info("User authenticated successfully: {}", username);
+            }
+            else {
+                log.warn("Invalid JWT token for user: {}", username);
             }
         }
 
-        filterChain.doFilter(request,response);
+        filterChain.doFilter(request, response);
     }
 }
