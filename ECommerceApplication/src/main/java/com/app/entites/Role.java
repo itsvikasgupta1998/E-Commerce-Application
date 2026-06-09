@@ -1,6 +1,7 @@
 package com.app.entites;
 
 
+import com.app.enums.RoleType;
 import jakarta.persistence.*;
 import lombok.*;
 

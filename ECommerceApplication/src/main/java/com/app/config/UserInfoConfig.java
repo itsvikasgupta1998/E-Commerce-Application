@@ -82,6 +82,6 @@ public class UserInfoConfig implements UserDetails {
 	@Override
 	public boolean isEnabled() {
 
-		return enabled && emailVerified;
+		return enabled;
 	}
 }

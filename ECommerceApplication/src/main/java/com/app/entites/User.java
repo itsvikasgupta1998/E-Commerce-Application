@@ -1,8 +1,9 @@
 package com.app.entites;
 
-
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +13,8 @@ import java.util.Set;
 		indexes = {
 				@Index(name = "idx_email", columnList = "email")
 		})
-@Data
+@Getter
+@Setter
 public class User extends BaseEntity {
 
 	@Id

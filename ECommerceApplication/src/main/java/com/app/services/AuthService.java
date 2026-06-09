@@ -18,6 +18,8 @@ public interface AuthService {
             String refreshToken
     );
 
+    void verifyEmail(String token);
+
     void logout(
             String refreshToken
     );

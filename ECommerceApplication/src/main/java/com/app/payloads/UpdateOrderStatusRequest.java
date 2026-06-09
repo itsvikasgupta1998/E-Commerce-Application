@@ -1,6 +1,6 @@
 package com.app.payloads;
 
-import com.app.entites.OrderStatus;
+import com.app.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

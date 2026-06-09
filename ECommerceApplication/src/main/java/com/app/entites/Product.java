@@ -68,6 +68,8 @@ public class Product extends BaseEntity {
 			nullable = false
 	)
 	private Category category;
+
+
 }
 
 

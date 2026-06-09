@@ -1,28 +1,45 @@
 package com.app.exceptions;
 
+import lombok.Getter;
+import java.io.Serial;
+
+@Getter
 public class ResourceNotFoundException extends RuntimeException {
 
+	@Serial
 	private static final long serialVersionUID = 1L;
 
-	String resourceName;
-	String field;
-	String fieldName;
-	Long fieldId;
+	private final String resourceName;
+	private final String field;
+	private final String fieldValue;
 
-	public ResourceNotFoundException() {
-	}
+	public ResourceNotFoundException(
+			String resourceName,
+			String field,
+			String fieldValue
+	) {
+		super(String.format(
+				"%s not found with %s: %s",
+				resourceName,
+				field,
+				fieldValue
+		));
 
-	public ResourceNotFoundException(String resourceName, String field, String fieldName) {
-		super(String.format("%s not found with %s: %s", resourceName, field, fieldName));
 		this.resourceName = resourceName;
 		this.field = field;
-		this.fieldName = fieldName;
+		this.fieldValue = fieldValue;
 	}
 
-	public ResourceNotFoundException(String resourceName, String field, Long fieldId) {
-		super(String.format("%s not found with %s: %d", resourceName, field, fieldId));
-		this.resourceName = resourceName;
-		this.field = field;
-		this.fieldId = fieldId;
+	public ResourceNotFoundException(
+			String resourceName,
+			String field,
+			Long fieldValue
+	) {
+		this(
+				resourceName,
+				field,
+				String.valueOf(fieldValue)
+		);
 	}
+
 }

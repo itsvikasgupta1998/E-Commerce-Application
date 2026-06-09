@@ -1,8 +1,11 @@
 package com.app.exceptions;
 
-public class UserNotFoundException extends Exception {
+import java.io.Serial;
+
+public class UserNotFoundException extends RuntimeException {
 	
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 	
 	public UserNotFoundException() {}
 	

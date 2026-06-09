@@ -7,6 +7,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -65,6 +66,24 @@ public class GlobalExceptionHandler {
 				));
 	}
 
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<ErrorResponse> handleBadCredentials(
+			BadCredentialsException ex,
+			HttpServletRequest request
+	) {
+
+		ErrorResponse error = ErrorResponse.builder()
+				.timestamp(LocalDateTime.now())
+				.status(401)
+				.error("Unauthorized")
+				.message("Invalid email or password")
+				.path(request.getRequestURI())
+				.build();
+
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(error);
+	}
+
 	@ExceptionHandler(APIException.class)
 	public ResponseEntity<ErrorResponse> handleApiException(
 			APIException ex,
@@ -76,6 +95,55 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 				.body(buildResponse(
 						HttpStatus.BAD_REQUEST,
+						ex.getMessage(),
+						request
+				));
+	}
+
+	@ExceptionHandler(TokenExpiredException.class)
+	public ResponseEntity<ErrorResponse> handleTokenExpired(
+			TokenExpiredException ex,
+			HttpServletRequest request
+	) {
+
+		ErrorResponse error = ErrorResponse.builder()
+				.timestamp(LocalDateTime.now())
+				.status(400)
+				.error("BAD_REQUEST")
+				.message(ex.getMessage())
+				.path(request.getRequestURI())
+				.build();
+
+		return ResponseEntity.badRequest().body(error);
+	}
+
+	@ExceptionHandler(EmailVerificationException.class)
+	public ResponseEntity<ErrorResponse> handleEmailVerificationException(
+			EmailVerificationException ex,
+			HttpServletRequest request
+	) {
+
+		log.warn("Email verification failed: {}", ex.getMessage());
+
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+				.body(buildResponse(
+						HttpStatus.BAD_REQUEST,
+						ex.getMessage(),
+						request
+				));
+	}
+
+	@ExceptionHandler(EmailNotVerifiedException.class)
+	public ResponseEntity<ErrorResponse> handleEmailNotVerified(
+			EmailNotVerifiedException ex,
+			HttpServletRequest request
+	) {
+
+		log.warn("Email not verified: {}", ex.getMessage());
+
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(buildResponse(
+						HttpStatus.FORBIDDEN,
 						ex.getMessage(),
 						request
 				));

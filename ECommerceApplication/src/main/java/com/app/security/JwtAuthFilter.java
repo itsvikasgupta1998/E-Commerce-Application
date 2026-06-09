@@ -25,6 +25,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
+
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
@@ -36,6 +38,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String authHeader = request.getHeader(SecurityConstants.HEADER);
 
         log.info("Incoming request: {} {}", request.getMethod(), requestURI);
+        if (request.getServletPath().startsWith("/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         // ---------------- NO TOKEN CASE ----------------
         if (authHeader == null || !authHeader.startsWith(SecurityConstants.TOKEN_PREFIX)) {

@@ -5,9 +5,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -15,22 +16,24 @@ import java.util.Map;
 
 @Slf4j
 @Component
-public class JwtAuthenticationEntryPoint
-        implements AuthenticationEntryPoint {
+public class CustomAccessDeniedHandler
+        implements AccessDeniedHandler {
 
     @Override
-    public void commence(
+    public void handle(
             HttpServletRequest request,
             HttpServletResponse response,
-            AuthenticationException authException
+            AccessDeniedException accessDeniedException
     ) throws IOException {
 
         log.warn(
-                "Unauthorized access attempt to {}",
+                "Forbidden access to {}",
                 request.getRequestURI()
         );
 
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setStatus(
+                HttpServletResponse.SC_FORBIDDEN
+        );
 
         response.setContentType(
                 MediaType.APPLICATION_JSON_VALUE
@@ -41,22 +44,22 @@ public class JwtAuthenticationEntryPoint
 
         errorResponse.put(
                 "timestamp",
-                LocalDateTime.now().toString()
+                LocalDateTime.now()
         );
 
         errorResponse.put(
                 "status",
-                HttpServletResponse.SC_UNAUTHORIZED
+                HttpServletResponse.SC_FORBIDDEN
         );
 
         errorResponse.put(
                 "error",
-                "UNAUTHORIZED"
+                "FORBIDDEN"
         );
 
         errorResponse.put(
                 "message",
-                "Authentication Required"
+                "You do not have permission to access this resource"
         );
 
         errorResponse.put(

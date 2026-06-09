@@ -88,7 +88,7 @@ public class OrderServiceImpl implements OrderService {
 		Order order = new Order();
 
 		User user =
-				userRepository.findByEmail(email)
+				userRepository.findByEmailWithRoles(email)
 						.orElseThrow(() -> {
 
 							log.warn(

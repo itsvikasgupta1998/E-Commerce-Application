@@ -1,5 +1,7 @@
 package com.app.entites;
 
+import com.app.enums.PaymentMethod;
+import com.app.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;

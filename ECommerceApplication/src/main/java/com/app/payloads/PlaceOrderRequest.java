@@ -1,6 +1,6 @@
 package com.app.payloads;
 
-import com.app.entites.PaymentMethod;
+import com.app.enums.PaymentMethod;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 

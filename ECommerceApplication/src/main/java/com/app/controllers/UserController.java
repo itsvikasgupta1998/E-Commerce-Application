@@ -19,70 +19,44 @@ public class UserController {
 
 	private final UserService userService;
 
+	// ---------------- GET USER BY ID ----------------
 	@GetMapping("/{userId}")
-	public ResponseEntity<UserResponse> getUserById(
-			@PathVariable Long userId
-	) {
-
-		return ResponseEntity.ok(
-				userService.getUserById(userId)
-		);
+	public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
+		UserResponse response = userService.getUserById(userId);
+		return ResponseEntity.ok(response);
 	}
 
+	// ---------------- GET ALL USERS (ADMIN) ----------------
 	@GetMapping
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Page<UserResponse>> getAllUsers(
-
-			@RequestParam(defaultValue = "0")
-			int page,
-
-			@RequestParam(defaultValue = "10")
-			int size,
-
-			@RequestParam(defaultValue = "userId")
-			String sortBy,
-
-			@RequestParam(defaultValue = "asc")
-			String sortDir
+			@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "10") int size,
+			@RequestParam(defaultValue = "userId") String sortBy,
+			@RequestParam(defaultValue = "asc") String sortDir
 	) {
-
-		return ResponseEntity.ok(
-				userService.getAllUsers(
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+		Page<UserResponse> response =
+				userService.getAllUsers(page, size, sortBy, sortDir);
+		return ResponseEntity.ok(response);
 	}
 
+
+	// ---------------- UPDATE USER ----------------
 	@PutMapping("/{userId}")
 	public ResponseEntity<UserResponse> updateUser(
-
 			@PathVariable Long userId,
-
-			@Valid
-			@RequestBody
-			UserUpdateRequest request
+			@Valid @RequestBody UserUpdateRequest request
 	) {
-
-		return ResponseEntity.ok(
-				userService.updateUser(
-						userId,
-						request
-				)
-		);
+		UserResponse response = userService.updateUser(userId, request);
+		return ResponseEntity.ok(response);
 	}
 
+
+	// ---------------- DELETE USER (ADMIN) ----------------
 	@DeleteMapping("/{userId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Void> deleteUser(
-			@PathVariable Long userId
-	) {
-
+	public ResponseEntity<Void> deleteUser(@PathVariable Long userId) {
 		userService.deleteUser(userId);
-
-		return ResponseEntity.noContent()
-				.build();
+		return ResponseEntity.noContent().build();
 	}
 }

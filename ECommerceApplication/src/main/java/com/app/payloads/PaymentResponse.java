@@ -1,7 +1,7 @@
 package com.app.payloads;
 
-import com.app.entites.PaymentMethod;
-import com.app.entites.PaymentStatus;
+import com.app.enums.PaymentMethod;
+import com.app.enums.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

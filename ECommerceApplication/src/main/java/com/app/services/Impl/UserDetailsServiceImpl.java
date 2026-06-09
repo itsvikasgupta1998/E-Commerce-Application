@@ -22,7 +22,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
 		log.info("Authentication request received for email: {}", email);
 
-		User user = userRepository.findByEmail(email)
+		User user = userRepository.findByEmailWithRoles(email)
 				.orElseThrow(() -> {
 					log.warn("Authentication failed - user not found: {}", email);
 					return new UsernameNotFoundException("User not found: " + email);

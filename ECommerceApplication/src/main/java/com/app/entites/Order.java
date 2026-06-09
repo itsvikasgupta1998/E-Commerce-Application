@@ -3,6 +3,8 @@ package com.app.entites;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+
+import com.app.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
