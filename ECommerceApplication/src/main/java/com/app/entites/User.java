@@ -3,8 +3,6 @@ package com.app.entites;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -66,15 +64,10 @@ public class User extends BaseEntity {
 	private Boolean enabled = true;
 
 	@Column(nullable = false)
-	private Boolean accountLocked = false;
-
-	@Column(nullable = false)
-	private Integer failedLoginAttempts = 0;
-
-	private LocalDateTime lockTime;
-
-	@Column(nullable = false)
 	private Boolean emailVerified = false;
+
+	@Version
+	private Long version;
 
 
 }

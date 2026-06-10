@@ -31,4 +31,7 @@ public class Cart extends BaseEntity {
 			orphanRemoval = true
 	)
 	private List<CartItem> cartItems = new ArrayList<>();
+
+	@Version
+	private Long version;
 }

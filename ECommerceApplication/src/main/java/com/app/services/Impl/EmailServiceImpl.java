@@ -21,4 +21,25 @@ public class EmailServiceImpl implements EmailService {
         log.info("Send email to: {}", email);
         log.info("Verification link: {}", link);
     }
+
+    @Override
+    public void sendPasswordResetEmail(
+            String email,
+            String token
+    ) {
+
+        String resetLink =
+                "http://localhost:8080/auth/reset-password?token="
+                        + token;
+
+        log.info(
+                "Send password reset email to: {}",
+                email
+        );
+
+        log.info(
+                "Password reset link: {}",
+                resetLink
+        );
+    }
 }

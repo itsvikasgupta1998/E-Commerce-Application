@@ -69,6 +69,9 @@ public class Product extends BaseEntity {
 	)
 	private Category category;
 
+	@Version
+	private Long version;
+
 
 }
 

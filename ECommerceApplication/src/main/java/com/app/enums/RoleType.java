@@ -1,4 +1,4 @@
-package com.app.entites;
+package com.app.enums;
 
 public enum RoleType {
     ROLE_ADMIN,

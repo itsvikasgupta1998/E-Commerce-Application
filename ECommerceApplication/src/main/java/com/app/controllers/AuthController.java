@@ -59,7 +59,7 @@ public class AuthController {
 		return ResponseEntity.ok(
 				APIResponse.builder()
 						.message("Logged out successfully")
-						.status(true)
+						.success(true)
 						.build()
 		);
 	}
@@ -68,6 +68,47 @@ public class AuthController {
 	public ResponseEntity<String> verifyEmail(@RequestParam String token) {
 		authService.verifyEmail(token);
 		return ResponseEntity.ok("Email verified successfully");
+	}
+
+	@PostMapping("/forgot-password")
+	public ResponseEntity<APIResponse>
+	forgotPassword(
+			@Valid
+			@RequestBody
+			ForgotPasswordRequest request
+	) {
+
+		authService.forgotPassword(
+				request.getEmail()
+		);
+
+		return ResponseEntity.ok(
+				APIResponse.builder()
+						.message("If the email exists, a reset link has been sent.")
+						.success(true)
+						.build()
+		);
+	}
+
+	@PostMapping("/reset-password")
+	public ResponseEntity<APIResponse>
+	resetPassword(
+			@Valid
+			@RequestBody
+			ResetPasswordRequest request
+	) {
+
+		authService.resetPassword(
+				request.getToken(),
+				request.getNewPassword()
+		);
+
+		return ResponseEntity.ok(
+				APIResponse.builder()
+						.success(true)
+						.message("Password reset successfully")
+						.build()
+		);
 	}
 
 }

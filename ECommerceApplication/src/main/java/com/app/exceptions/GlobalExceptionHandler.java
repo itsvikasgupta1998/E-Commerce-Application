@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
@@ -233,5 +234,28 @@ public class GlobalExceptionHandler {
 						"An unexpected error occurred",
 						request
 				));
+	}
+
+
+	@ExceptionHandler(
+			ObjectOptimisticLockingFailureException.class
+	)
+	public ResponseEntity<ErrorResponse>
+	handleOptimisticLocking(
+			ObjectOptimisticLockingFailureException ex
+	) {
+
+		ErrorResponse response =
+				ErrorResponse.builder()
+						.status(HttpStatus.CONFLICT.value())
+						.error("Conflict")
+						.message(
+								"Data was modified by another user. Please retry."
+						)
+						.build();
+
+		return ResponseEntity
+				.status(HttpStatus.CONFLICT)
+				.body(response);
 	}
 }

@@ -37,4 +37,7 @@ public class Order extends BaseEntity {
 			cascade = CascadeType.ALL
 	)
 	private List<OrderItem> orderItems;
+
+	@Version
+	private Long version;
 }

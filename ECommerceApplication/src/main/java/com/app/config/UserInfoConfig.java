@@ -19,8 +19,6 @@ public class UserInfoConfig implements UserDetails {
 
 	private final boolean enabled;
 
-	private final boolean accountLocked;
-
 	private final boolean emailVerified;
 
 	private final List<GrantedAuthority> authorities;
@@ -34,8 +32,6 @@ public class UserInfoConfig implements UserDetails {
 		this.password = user.getPassword();
 
 		this.enabled = user.getEnabled();
-
-		this.accountLocked = user.getAccountLocked();
 
 		this.emailVerified = user.getEmailVerified();
 
@@ -62,21 +58,6 @@ public class UserInfoConfig implements UserDetails {
 	@Override
 	public String getPassword() {
 		return password;
-	}
-
-	@Override
-	public boolean isAccountNonExpired() {
-		return true;
-	}
-
-	@Override
-	public boolean isAccountNonLocked() {
-		return !accountLocked;
-	}
-
-	@Override
-	public boolean isCredentialsNonExpired() {
-		return true;
 	}
 
 	@Override
