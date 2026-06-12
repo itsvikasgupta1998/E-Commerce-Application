@@ -2,7 +2,7 @@ package com.app.mappers;
 
 import com.app.entites.Cart;
 import com.app.payloads.CartResponse;
-import org.mapstruct.Mapper;
+import org.mapstruct.*;
 
 @Mapper(
         componentModel = "spring",
@@ -10,5 +10,10 @@ import org.mapstruct.Mapper;
 )
 public interface CartMapper {
 
+    @Mapping(target = "items", source = "cartItems")
+    @Mapping(
+            target = "totalItems",
+            expression = "java(cart.getCartItems() == null ? 0 : cart.getCartItems().size())"
+    )
     CartResponse toResponse(Cart cart);
 }

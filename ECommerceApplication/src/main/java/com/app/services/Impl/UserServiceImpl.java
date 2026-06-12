@@ -8,10 +8,7 @@ import com.app.entites.User;
 import com.app.exceptions.APIException;
 import com.app.exceptions.ResourceNotFoundException;
 import com.app.mappers.UserMapper;
-import com.app.payloads.AddressRequest;
-import com.app.payloads.UserRegistrationRequest;
-import com.app.payloads.UserResponse;
-import com.app.payloads.UserUpdateRequest;
+import com.app.payloads.*;
 import com.app.repositories.AddressRepository;
 import com.app.repositories.RoleRepository;
 import com.app.repositories.UserRepository;
@@ -19,9 +16,13 @@ import com.app.services.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -45,7 +46,7 @@ public class UserServiceImpl implements UserService {
 				request.getEmail()
 		);
 
-		if (userRepository.existsByEmail(request.getEmail())) {
+		if (userRepository.existsByEmailAndDeletedFalse(request.getEmail())) {
 
 			log.warn(
 					"Registration failed. Email already exists. email={}",
@@ -58,6 +59,10 @@ public class UserServiceImpl implements UserService {
 		}
 
 		User user = userMapper.toEntity(request);
+		user.setEnabled(true);
+		user.setDeleted(false);
+		user.setDeletedAt(null);
+		user.setEmailVerified(false);
 
 		user.setPassword(
 				passwordEncoder.encode(
@@ -129,7 +134,7 @@ public class UserServiceImpl implements UserService {
 		);
 
 		User user =
-				userRepository.findById(userId)
+				userRepository.findByUserIdAndDeletedFalse(userId)
 						.orElseThrow(() -> {
 
 							log.warn(
@@ -159,7 +164,7 @@ public class UserServiceImpl implements UserService {
 		);
 
 		User user =
-				userRepository.findById(userId)
+				userRepository.findByUserIdAndDeletedFalse(userId)
 						.orElseThrow(() -> {
 
 							log.warn(
@@ -201,9 +206,7 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
-	public void deleteUser(
-			Long userId
-	) {
+	public void deleteUser(Long userId) {
 
 		log.warn(
 				"Delete user request received. userId={}",
@@ -211,7 +214,7 @@ public class UserServiceImpl implements UserService {
 		);
 
 		User user =
-				userRepository.findById(userId)
+				userRepository.findByUserId(userId)
 						.orElseThrow(() -> {
 
 							log.warn(
@@ -226,7 +229,23 @@ public class UserServiceImpl implements UserService {
 							);
 						});
 
-		userRepository.delete(user);
+		if (Boolean.TRUE.equals(user.getDeleted())) {
+
+			log.warn(
+					"Delete failed. User already deleted. userId={}",
+					userId
+			);
+
+			throw new APIException(
+					"User is already deleted"
+			);
+		}
+
+		user.setDeleted(true);
+		user.setEnabled(false);
+		user.setDeletedAt(LocalDateTime.now());
+
+		userRepository.save(user);
 
 		log.warn(
 				"User deleted successfully. userId={}",
@@ -264,7 +283,7 @@ public class UserServiceImpl implements UserService {
 				);
 
 		Page<User> users =
-				userRepository.findAll(pageable);
+				userRepository.findAllByDeletedFalse(pageable);
 
 		log.debug(
 				"Users fetched successfully. totalElements={}",
@@ -310,4 +329,222 @@ public class UserServiceImpl implements UserService {
 					return addressRepository.save(address);
 				});
 	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public UserResponse getCurrentUser() {
+
+		User user = getAuthenticatedUser();
+
+		return userMapper.toResponse(user);
+	}
+
+	@Override
+	public UserResponse updateCurrentUser(
+			UserUpdateRequest request
+	) {
+
+		User user =
+				getAuthenticatedUser();
+
+		userMapper.updateUserFromRequest(
+				request,
+				user
+		);
+
+		if (request.getAddress() != null) {
+
+			Address address =
+					getOrCreateAddress(
+							request.getAddress()
+					);
+
+			user.getAddresses().add(address);
+		}
+
+		User updatedUser =
+				userRepository.save(user);
+
+		return userMapper.toResponse(
+				updatedUser
+		);
+	}
+
+	@Override
+	public void changePassword(
+			ChangePasswordRequest request
+	) {
+
+		User user =
+				getAuthenticatedUser();
+
+		if (
+				!passwordEncoder.matches(
+						request.getOldPassword(),
+						user.getPassword()
+				)
+		) {
+
+			throw new APIException(
+					"Old password is incorrect"
+			);
+		}
+
+		user.setPassword(
+				passwordEncoder.encode(
+						request.getNewPassword()
+				)
+		);
+
+		userRepository.save(user);
+
+		log.info(
+				"Password changed successfully. userId={}",
+				user.getUserId()
+		);
+	}
+
+	private User getAuthenticatedUser() {
+
+		Authentication authentication =
+				SecurityContextHolder
+						.getContext()
+						.getAuthentication();
+
+		String email =
+				authentication.getName();
+
+		return userRepository
+				.findByEmailWithRoles(email)
+				.orElseThrow(() ->
+						new ResourceNotFoundException(
+								"User",
+								"email",
+								email
+						)
+				);
+	}
+
+	@Override
+	public void restoreUser(Long userId) {
+
+		log.info(
+				"Restore user request received. userId={}",
+				userId
+		);
+
+		User user =
+				userRepository.findByUserId(userId)
+						.orElseThrow(() -> {
+
+							log.warn(
+									"Restore failed. User not found. userId={}",
+									userId
+							);
+
+							return new ResourceNotFoundException(
+									"User",
+									"userId",
+									userId
+							);
+						});
+
+		if (!Boolean.TRUE.equals(user.getDeleted())) {
+
+			log.warn(
+					"Restore failed. User already active. userId={}",
+					userId
+			);
+
+			throw new APIException(
+					"User is already active"
+			);
+		}
+
+		user.setDeleted(false);
+		user.setDeletedAt(null);
+		user.setEnabled(true);
+
+		userRepository.save(user);
+
+		log.info(
+				"User restored successfully. userId={}",
+				userId
+		);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<UserResponse> getDeletedUsers(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	) {
+
+		log.debug(
+				"Fetching deleted users. page={}, size={}",
+				page,
+				size
+		);
+
+		Sort sort =
+				sortDir.equalsIgnoreCase("desc")
+						? Sort.by(sortBy).descending()
+						: Sort.by(sortBy).ascending();
+
+		Pageable pageable =
+				PageRequest.of(
+						page,
+						size,
+						sort
+				);
+
+		Page<User> users =
+				userRepository.findAllByDeletedTrue(
+						pageable
+				);
+
+		return users.map(
+				userMapper::toResponse
+		);
+	}
+
+	@Override
+	@Transactional(readOnly = true)
+	public Page<UserResponse> getAllUsersIncludingDeleted(
+			int page,
+			int size,
+			String sortBy,
+			String sortDir
+	) {
+
+		log.debug(
+				"Fetching all users including deleted. page={}, size={}",
+				page,
+				size
+		);
+
+		Sort sort =
+				sortDir.equalsIgnoreCase("desc")
+						? Sort.by(sortBy).descending()
+						: Sort.by(sortBy).ascending();
+
+		Pageable pageable =
+				PageRequest.of(
+						page,
+						size,
+						sort
+				);
+
+		Page<User> users =
+				userRepository.findAll(
+						pageable
+				);
+
+		return users.map(
+				userMapper::toResponse
+		);
+	}
+
 }

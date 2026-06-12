@@ -32,5 +32,13 @@ public class UserResponse {
 
 	private LocalDateTime updatedAt;
 
+	private Boolean enabled;
+
+	private Boolean deleted;
+
+	private Boolean emailVerified;
+
+	private LocalDateTime deletedAt;
+
 
 }

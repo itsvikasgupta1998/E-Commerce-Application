@@ -39,12 +39,17 @@ public class AuthController {
 	// ---------------- REFRESH TOKEN ----------------
 	@PostMapping("/refresh")
 	public ResponseEntity<AuthResponse> refresh(
-			@RequestParam String refreshToken
+			@Valid
+			@RequestBody
+			RefreshTokenRequest request
 	) {
-		AuthResponse response = authService.refreshToken(refreshToken);
-		return ResponseEntity.ok(response);
-	}
 
+		return ResponseEntity.ok(
+				authService.refreshToken(
+						request.getRefreshToken()
+				)
+		);
+	}
 
 	// ---------------- LOGOUT ----------------
 	@PostMapping("/logout")
@@ -65,10 +70,20 @@ public class AuthController {
 	}
 
 	@GetMapping("/verify-email")
-	public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+	public ResponseEntity<APIResponse> verifyEmail(
+			@RequestParam String token
+	) {
+
 		authService.verifyEmail(token);
-		return ResponseEntity.ok("Email verified successfully");
+
+		return ResponseEntity.ok(
+				APIResponse.builder()
+						.success(true)
+						.message("Email verified successfully")
+						.build()
+		);
 	}
+
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<APIResponse>
