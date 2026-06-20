@@ -14,6 +14,7 @@ public interface ProductMapper {
 
     Product toEntity(CreateProductRequest request);
 
+    @Mapping(source = "image", target = "imageUrl")
     ProductResponse toResponse(Product product);
 
     @BeanMapping(

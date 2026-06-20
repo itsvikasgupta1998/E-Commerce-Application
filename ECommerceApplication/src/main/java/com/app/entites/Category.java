@@ -1,7 +1,8 @@
 package com.app.entites;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 
@@ -15,7 +16,8 @@ import java.util.List;
 				)
 		}
 )
-@Data
+@Getter
+@Setter
 public class Category extends BaseEntity {
 
 	@Id
@@ -31,7 +33,8 @@ public class Category extends BaseEntity {
 	private String categoryName;
 
 	@OneToMany(
-			mappedBy = "category"
+			mappedBy = "category",
+			fetch = FetchType.LAZY
 	)
 	private List<Product> products;
 }

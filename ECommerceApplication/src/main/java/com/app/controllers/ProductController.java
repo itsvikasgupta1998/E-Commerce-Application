@@ -1,9 +1,6 @@
 package com.app.controllers;
 
-import com.app.payloads.CreateProductRequest;
-import com.app.payloads.ProductPageResponse;
-import com.app.payloads.ProductResponse;
-import com.app.payloads.UpdateProductRequest;
+import com.app.payloads.*;
 import com.app.services.ProductService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -11,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +21,7 @@ public class ProductController {
 
 	private final ProductService productService;
 
+	@PreAuthorize("hasRole('ADMIN')")
 	@PostMapping("/category/{categoryId}")
 	public ResponseEntity<ProductResponse> createProduct(
 			@PathVariable Long categoryId,
@@ -107,10 +106,11 @@ public class ProductController {
 		);
 	}
 
+	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping("/{productId}")
 	public ResponseEntity<ProductResponse> updateProduct(
 			@PathVariable Long productId,
-			@RequestBody UpdateProductRequest request
+			@Valid @RequestBody UpdateProductRequest request
 	) {
 
 		return ResponseEntity.ok(
@@ -121,6 +121,7 @@ public class ProductController {
 		);
 	}
 
+	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping(
 			value = "/{productId}/image",
 			consumes = MediaType.MULTIPART_FORM_DATA_VALUE
@@ -138,14 +139,19 @@ public class ProductController {
 		);
 	}
 
+	@PreAuthorize("hasRole('ADMIN')")
 	@DeleteMapping("/{productId}")
-	public ResponseEntity<Void> deleteProduct(
+	public ResponseEntity<APIResponse> deleteProduct(
 			@PathVariable Long productId
 	) {
 
 		productService.deleteProduct(productId);
 
-		return ResponseEntity.noContent().build();
+		return ResponseEntity.ok(
+				APIResponse.builder()
+						.message("Category deleted successfully")
+						.success(true)
+						.build()
+		);
 	}
-
 }

@@ -32,4 +32,7 @@ public class CreateProductRequest {
 	private BigDecimal discount;
 
 	private Long categoryId;
+
+	@NotBlank
+	private String sku;
 }

@@ -6,13 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface ProductRepository
 		extends JpaRepository<Product, Long> {
-
-	boolean existsByProductNameIgnoreCase(
-			String productName
-	);
 
 	Page<Product> findByCategoryCategoryId(
 			Long categoryId,
@@ -22,5 +20,15 @@ public interface ProductRepository
 	Page<Product> findByProductNameContainingIgnoreCase(
 			String keyword,
 			Pageable pageable
+	);
+
+	long countByCategory_CategoryId(Long categoryId);
+
+	boolean existsBySkuIgnoreCase(String sku);
+
+	boolean existsByProductNameIgnoreCase(String productName);
+
+	Optional<Product> findByProductNameIgnoreCase(
+			String productName
 	);
 }

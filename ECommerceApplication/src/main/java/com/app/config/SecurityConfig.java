@@ -60,7 +60,9 @@ public class SecurityConfig {
 						// ==========================
 
 						.requestMatchers(
-								"/auth/**"
+								"/auth/**",
+								"/images/**",
+								"/api/files/**"
 						).permitAll()
 
 						.requestMatchers(

@@ -59,7 +59,10 @@ public class Product extends BaseEntity {
 	)
 	private String sku;
 
-	@Column(nullable = false)
+	@Column(
+			nullable = false,
+			length = 500
+	)
 	private String image;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -72,7 +75,19 @@ public class Product extends BaseEntity {
 	@Version
 	private Long version;
 
+	@PrePersist
+	@PreUpdate
+	private void normalizeFields() {
 
+		if (sku != null) {
+			sku = sku.trim().toUpperCase();
+		}
+
+		if (productName != null) {
+			productName = productName.trim();
+		}
+	}
+	
 }
 
 
