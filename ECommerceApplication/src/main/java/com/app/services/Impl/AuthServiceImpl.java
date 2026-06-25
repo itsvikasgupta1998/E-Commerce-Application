@@ -343,4 +343,5 @@ public class AuthServiceImpl implements AuthService {
 
         passwordResetTokenRepository.delete(token);
     }
+
 }

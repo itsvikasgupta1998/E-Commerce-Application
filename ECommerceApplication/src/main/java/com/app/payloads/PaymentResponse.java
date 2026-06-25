@@ -15,8 +15,16 @@ import java.time.LocalDateTime;
 public class PaymentResponse {
 
     private Long paymentId;
+
     private PaymentMethod paymentMethod;
+
     private PaymentStatus paymentStatus;
+
     private String transactionId;
+
+    private String gatewayTransactionId;
+
     private LocalDateTime paidAt;
+
+    private String failureReason;
 }

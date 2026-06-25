@@ -22,22 +22,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
 	Optional<User> findByUserId(Long userId);
 
-	boolean existsByEmailAndDeletedFalse(
-			String email
-	);
+	boolean existsByEmailAndDeletedFalse(String email);
 
-	Optional<User> findByUserIdAndDeletedFalse(
-			Long userId
-	);
+	Optional<User> findByUserIdAndDeletedFalse(Long userId);
 
-	Page<User> findAllByDeletedFalse(
-			Pageable pageable
-	);
+	Page<User> findAllByDeletedFalse(Pageable pageable);
 
-	Page<User> findAllByDeletedTrue(
-			Pageable pageable
-	);
+	Page<User> findAllByDeletedTrue(Pageable pageable);
 
+	Optional<User> findByEmail(String email);
 
 
 }

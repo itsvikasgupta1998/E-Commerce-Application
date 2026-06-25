@@ -19,9 +19,10 @@ public class Cart extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long cartId;
 
+	@Column(nullable = false)
 	private BigDecimal totalPrice;
 
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id")
 	private User user;
 

@@ -1,5 +1,6 @@
 package com.app.services;
 
+import com.app.entites.User;
 import com.app.payloads.ChangePasswordRequest;
 import com.app.payloads.UserRegistrationRequest;
 import com.app.payloads.UserUpdateRequest;
@@ -51,5 +52,7 @@ public interface UserService {
 			String sortBy,
 			String sortDir
 	);
+
+	User getAuthenticatedUserEntity();
 
 }

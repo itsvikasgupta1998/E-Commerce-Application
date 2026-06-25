@@ -1,9 +1,8 @@
 package com.app.entites;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
-
 import com.app.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -23,7 +22,7 @@ public class Order extends BaseEntity {
 	@JoinColumn(name = "user_id")
 	private User user;
 
-	private LocalDate orderDate;
+	private LocalDateTime orderDate;
 	private BigDecimal totalAmount;
 
 	@Enumerated(EnumType.STRING)

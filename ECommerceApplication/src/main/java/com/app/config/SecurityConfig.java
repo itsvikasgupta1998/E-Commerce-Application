@@ -62,7 +62,10 @@ public class SecurityConfig {
 						.requestMatchers(
 								"/auth/**",
 								"/images/**",
-								"/api/files/**"
+								"/api/files/**",
+								"/api/payments/webhook",
+								"/payment-success",
+								"/payment-cancel"
 						).permitAll()
 
 						.requestMatchers(

@@ -13,7 +13,16 @@ public interface CartMapper {
     @Mapping(target = "items", source = "cartItems")
     @Mapping(
             target = "totalItems",
-            expression = "java(cart.getCartItems() == null ? 0 : cart.getCartItems().size())"
+            expression = """
+            java(
+                cart.getCartItems() == null
+                ? 0
+                : cart.getCartItems()
+                      .stream()
+                      .mapToInt(item -> item.getQuantity())
+                      .sum()
+            )
+            """
     )
     CartResponse toResponse(Cart cart);
 }

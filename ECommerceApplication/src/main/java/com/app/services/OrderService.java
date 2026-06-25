@@ -5,7 +5,6 @@ import com.app.payloads.*;
 public interface OrderService {
 
 	OrderResponse createOrder(
-			String email,
 			PlaceOrderRequest request
 	);
 
@@ -20,14 +19,14 @@ public interface OrderService {
 			String sortDir
 	);
 
-	OrderPageResponse getOrdersByUser(
-			String email,
-			int page,
-			int size
-	);
+	OrderPageResponse getMyOrders(int page, int size);
 
 	OrderResponse updateOrderStatus(
 			Long orderId,
 			UpdateOrderStatusRequest request
 	);
+
+	OrderResponse cancelOrder(Long orderId);
+
+
 }
