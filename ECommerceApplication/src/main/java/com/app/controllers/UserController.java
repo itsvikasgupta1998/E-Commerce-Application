@@ -25,52 +25,31 @@ public class UserController {
 
 	@GetMapping("/me")
 	public ResponseEntity<UserResponse> getCurrentUser() {
-
-		return ResponseEntity.ok(
-				userService.getCurrentUser()
-		);
+		return ResponseEntity.ok(userService.getCurrentUser());
 	}
 
 	@PutMapping("/me")
-	public ResponseEntity<UserResponse> updateCurrentUser(
-			@Valid
-			@RequestBody
-			UserUpdateRequest request
-	) {
-
-		return ResponseEntity.ok(
-				userService.updateCurrentUser(request)
-		);
+	public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UserUpdateRequest request)
+	{
+		return ResponseEntity.ok(userService.updateCurrentUser(request));
 	}
 
 	@PutMapping("/change-password")
-	public ResponseEntity<APIResponse> changePassword(
-			@Valid
-			@RequestBody
-			ChangePasswordRequest request
-	) {
-
+	public ResponseEntity<APIResponse> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
 		userService.changePassword(request);
-
-		return ResponseEntity.ok(
-				APIResponse.builder()
-						.success(true)
-						.message("Password changed successfully")
-						.build()
-		);
+		return ResponseEntity.ok(APIResponse
+				.builder()
+				.success(true)
+				.message("Password changed successfully")
+				.build());
 	}
 
 	// ================= ADMIN APIs =================
 
 	@GetMapping("/{userId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<UserResponse> getUserById(
-			@PathVariable Long userId
-	) {
-
-		return ResponseEntity.ok(
-				userService.getUserById(userId)
-		);
+	public ResponseEntity<UserResponse> getUserById(@PathVariable Long userId) {
+		return ResponseEntity.ok(userService.getUserById(userId));
 	}
 
 	@GetMapping
@@ -79,76 +58,50 @@ public class UserController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "userId") String sortBy,
-			@RequestParam(defaultValue = "asc") String sortDir
-	) {
-
-		return ResponseEntity.ok(
-				userService.getAllUsers(
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+			@RequestParam(defaultValue = "asc") String sortDir)
+	{
+		return ResponseEntity.ok(userService.getAllUsers(page, size, sortBy, sortDir));
 	}
+
 
 	@DeleteMapping("/{userId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<APIResponse> deleteUser(
-			@PathVariable Long userId
-	) {
-
+	public ResponseEntity<APIResponse> deleteUser(@PathVariable Long userId)
+	{
 		userService.deleteUser(userId);
-
-		return ResponseEntity.ok(
-				APIResponse.builder()
-						.success(true)
-						.message("User deleted successfully")
-						.build()
-		);
+		return ResponseEntity.ok(APIResponse
+				.builder()
+				.success(true)
+				.message("User deleted successfully")
+				.build());
 	}
 
 	@GetMapping("/deleted")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Page<UserResponse>> getDeletedUsers(
-
 			@RequestParam(defaultValue = "0")
 			int page,
-
 			@RequestParam(defaultValue = "10")
 			int size,
-
 			@RequestParam(defaultValue = "userId")
 			String sortBy,
-
 			@RequestParam(defaultValue = "desc")
-			String sortDir
-	) {
-
-		return ResponseEntity.ok(
-				userService.getDeletedUsers(
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+			String sortDir)
+	{
+		return ResponseEntity.ok(userService.getDeletedUsers(page, size, sortBy, sortDir));
 	}
+
 
 	@PostMapping("/{userId}/restore")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<APIResponse> restoreUser(
-			@PathVariable Long userId
-	) {
+	public ResponseEntity<APIResponse> restoreUser(@PathVariable Long userId) {
 
 		userService.restoreUser(userId);
-
-		return ResponseEntity.ok(
-				APIResponse.builder()
-						.success(true)
-						.message("User restored successfully")
-						.build()
-		);
+		return ResponseEntity.ok(APIResponse
+				.builder()
+				.success(true)
+				.message("User restored successfully")
+				.build());
 	}
 
 	@GetMapping("/all")
@@ -157,24 +110,13 @@ public class UserController {
 
 			@RequestParam(defaultValue = "0")
 			int page,
-
 			@RequestParam(defaultValue = "15")
 			int size,
-
 			@RequestParam(defaultValue = "userId")
 			String sortBy,
-
 			@RequestParam(defaultValue = "asc")
-			String sortDir
-	) {
-
-		return ResponseEntity.ok(
-				userService.getAllUsersIncludingDeleted(
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+			String sortDir)
+	{
+		return ResponseEntity.ok(userService.getAllUsersIncludingDeleted(page, size, sortBy, sortDir));
 	}
 }

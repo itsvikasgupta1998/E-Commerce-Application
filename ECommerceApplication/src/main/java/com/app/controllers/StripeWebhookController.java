@@ -25,56 +25,31 @@ public class StripeWebhookController {
 
     @PostMapping
     public ResponseEntity<Void> handleStripeWebhook(
-
             @RequestBody String payload,
-
             @RequestHeader("Stripe-Signature")
             @NotBlank
             String stripeSignature
     ) {
 
+
+
         try {
-
-            Event event =
-                    Webhook.constructEvent(
-                            payload,
-                            stripeSignature,
-                            webhookSecret
-                    );
-
-            log.info(
-                    "Stripe webhook received. eventId={}, eventType={}",
-                    event.getId(),
-                    event.getType()
-            );
-
-            paymentWebhookService.processWebhookEvent(
-                    event
-            );
-
+            Event event = Webhook.constructEvent(payload, stripeSignature, webhookSecret);
+            log.info("Stripe webhook received. eventId={}, eventType={}", event.getId(), event.getType());
+            paymentWebhookService.processWebhookEvent(event);
             return ResponseEntity.ok().build();
 
-        } catch (SignatureVerificationException ex) {
+        }
 
-            log.error(
-                    "Invalid Stripe webhook signature",
-                    ex
-            );
+        catch (SignatureVerificationException ex) {
+            log.error("Invalid Stripe webhook signature", ex);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
 
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .build();
+        }
 
-        } catch (Exception ex) {
-
-            log.error(
-                    "Stripe webhook processing failed",
-                    ex
-            );
-
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+        catch (Exception ex) {
+            log.error("Stripe webhook processing failed", ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

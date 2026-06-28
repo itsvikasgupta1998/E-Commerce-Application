@@ -26,13 +26,10 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public UserResponse assignAdminRole(Long userId) {
-
         log.info("Admin role assignment started for userId={}", userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User", "userId", userId
-                ));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
 
         Role adminRole = roleRepository.findByRoleType(RoleType.ROLE_ADMIN)
                 .orElseThrow(() -> {
@@ -46,11 +43,8 @@ public class AdminServiceImpl implements AdminService {
         }
 
         user.getRoles().add(adminRole);
-
         User updated = userRepository.save(user);
-
         log.info("ADMIN role assigned successfully. userId={}", userId);
-
         return userMapper.toResponse(updated);
     }
 }

@@ -20,9 +20,7 @@ public class CartController {
 	@GetMapping("/me")
 	public ResponseEntity<CartResponse> getMyCart() {
 
-		return ResponseEntity.ok(
-				cartService.getCurrentUserCart()
-		);
+		return ResponseEntity.ok(cartService.getCurrentUserCart());
 	}
 
 	@PostMapping("/me/products/{productId}")

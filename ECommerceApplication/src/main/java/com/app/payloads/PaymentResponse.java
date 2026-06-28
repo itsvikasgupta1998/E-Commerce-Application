@@ -27,4 +27,8 @@ public class PaymentResponse {
     private LocalDateTime paidAt;
 
     private String failureReason;
+
+    private String stripeRefundId;
+
+    private LocalDateTime refundedAt;
 }

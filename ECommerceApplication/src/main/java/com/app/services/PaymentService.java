@@ -17,13 +17,6 @@ public interface PaymentService {
             Long orderId
     );
 
-    PaymentResponse markPaymentSuccess(
-            Long paymentId
-    );
-
-    PaymentResponse markPaymentFailure(
-            Long paymentId,
-            String failureReason
-    );
+    PaymentResponse refundPayment(Long paymentId);
 
 }

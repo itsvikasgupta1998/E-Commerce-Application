@@ -18,9 +18,7 @@ public class AuthController {
 
 	// ---------------- REGISTER ----------------
 	@PostMapping("/register")
-	public ResponseEntity<AuthResponse> register(
-			@Valid @RequestBody UserRegistrationRequest request
-	) {
+	public ResponseEntity<AuthResponse> register(@Valid @RequestBody UserRegistrationRequest request) {
 		AuthResponse response = authService.register(request);
 		return ResponseEntity.status(HttpStatus.CREATED).body(response);
 	}
@@ -38,35 +36,21 @@ public class AuthController {
 
 	// ---------------- REFRESH TOKEN ----------------
 	@PostMapping("/refresh")
-	public ResponseEntity<AuthResponse> refresh(
-			@Valid
-			@RequestBody
-			RefreshTokenRequest request
-	) {
-
-		return ResponseEntity.ok(
-				authService.refreshToken(
-						request.getRefreshToken()
-				)
-		);
+	public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+		return ResponseEntity.ok(authService.refreshToken(request.getRefreshToken()));
 	}
 
 	// ---------------- LOGOUT ----------------
 	@PostMapping("/logout")
-	public ResponseEntity<APIResponse> logout(
-			@Valid @RequestBody LogoutRequest request
-	) {
+	public ResponseEntity<APIResponse> logout(@Valid @RequestBody LogoutRequest request) {
 
-		authService.logout(
-				request.getRefreshToken()
-		);
+		authService.logout(request.getRefreshToken());
 
-		return ResponseEntity.ok(
-				APIResponse.builder()
-						.message("Logged out successfully")
-						.success(true)
-						.build()
-		);
+		return ResponseEntity.ok(APIResponse
+				.builder()
+				.message("Logged out successfully")
+				.success(true)
+				.build());
 	}
 
 	@GetMapping("/verify-email")

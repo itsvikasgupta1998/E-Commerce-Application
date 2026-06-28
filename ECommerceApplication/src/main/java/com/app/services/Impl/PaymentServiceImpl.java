@@ -9,7 +9,9 @@ import com.app.exceptions.ResourceNotFoundException;
 import com.app.mappers.PaymentMapper;
 import com.app.payloads.CheckoutSessionResponse;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Refund;
 import com.stripe.model.checkout.Session;
+import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import com.app.payloads.PaymentResponse;
 import com.app.repositories.OrderRepository;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.beans.factory.annotation.Value;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Slf4j
 @Service
@@ -34,7 +38,6 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Value("${app.payment.cancel-url}")
     private String cancelUrl;
-
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
@@ -106,14 +109,15 @@ public class PaymentServiceImpl implements PaymentService {
             Long orderId
     ) {
 
-        Order order =
-                orderRepository.findById(orderId)
+        Order order = orderRepository.findById(orderId)
                         .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Order",
-                                        "orderId",
-                                        orderId
-                                ));
+                                new ResourceNotFoundException("Order", "orderId", orderId));
+
+
+        // Cannot create payment for canceled orders
+        if (order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new APIException("This order has been cancelled. Please place a new order.");
+        }
 
         Payment payment = order.getPayment();
 
@@ -152,7 +156,11 @@ public class PaymentServiceImpl implements PaymentService {
                                             "?orderId=" +
                                             order.getOrderId()
                             )
-
+                            .setExpiresAt(
+                                    Instant.now()
+                                            .plus(30, ChronoUnit.MINUTES)
+                                            .getEpochSecond()
+                            )
                             .addLineItem(
                                     SessionCreateParams.LineItem
                                             .builder()
@@ -236,120 +244,65 @@ public class PaymentServiceImpl implements PaymentService {
         }
         catch (StripeException ex) {
 
-            throw new APIException(
-                    "Stripe checkout creation failed"
-            );
+            throw new APIException("Stripe checkout creation failed");
         }
     }
 
     @Override
-    public PaymentResponse markPaymentSuccess(
-            Long paymentId
-    ) {
+    public PaymentResponse refundPayment(Long paymentId) {
 
-        log.info(
-                "Mark payment success requested. paymentId={}",
-                paymentId
-        );
+        log.info("Refund requested. paymentId={}", paymentId);
 
-        Payment payment =
-                paymentRepository.findById(paymentId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Payment",
-                                        "paymentId",
-                                        paymentId
-                                )
-                        );
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment", "paymentId", paymentId));
 
-        if (payment.getPaymentStatus()
-                == PaymentStatus.SUCCESS) {
-
-            throw new APIException(
-                    "Payment already marked as SUCCESS"
-            );
+        // Already refunded
+        if (payment.getPaymentStatus() == PaymentStatus.REFUNDED) {
+            throw new APIException("Payment already refunded");
         }
 
-        payment.setPaymentStatus(
-                PaymentStatus.SUCCESS
-        );
+        // Only successful payments can be refunded
+        if (payment.getPaymentStatus() != PaymentStatus.SUCCESS) {
+            throw new APIException("Only successful payments can be refunded");
+        }
 
-        payment.setUpdatedAt(
-                LocalDateTime.now()
-        );
+        // Stripe payment required
+        if (payment.getStripePaymentIntentId() == null) {
+            throw new APIException("Stripe Payment Intent not found");
+        }
 
         Order order = payment.getOrder();
 
-        if (order != null
-                && order.getOrderStatus() == OrderStatus.PLACED) {
-
-            orderRepository.save(order);
+        // Important: Validate BEFORE calling Stripe API
+        if (order != null && order.getOrderStatus() == OrderStatus.DELIVERED) {
+            throw new APIException("Delivered orders cannot be refunded");
         }
 
-        Payment updatedPayment =
-                paymentRepository.save(payment);
+        try {
 
-        log.info(
-                "Payment marked SUCCESS. paymentId={}",
-                paymentId
-        );
+            RefundCreateParams params = RefundCreateParams.builder()
+                            .setPaymentIntent(payment.getStripePaymentIntentId())
+                            .build();
 
-        return paymentMapper.toResponse(
-                updatedPayment
-        );
-    }
+            Refund refund = Refund.create(params);
+            payment.setPaymentStatus(PaymentStatus.REFUNDED);
+            payment.setStripeRefundId(refund.getId());
+            payment.setRefundedAt(LocalDateTime.now());
+            Payment updatedPayment = paymentRepository.save(payment);
 
-    @Override
-    public PaymentResponse markPaymentFailure(
-            Long paymentId,
-            String failureReason
-    ) {
+            if (order != null && order.getOrderStatus() != OrderStatus.CANCELLED) {
+                order.setOrderStatus(OrderStatus.CANCELLED);
+                orderRepository.save(order);
+            }
 
-        log.info(
-                "Mark payment failure requested. paymentId={}",
-                paymentId
-        );
+            log.info("Refund successful. paymentId={}, refundId={}", paymentId, refund.getId());
+            return paymentMapper.toResponse(updatedPayment);
 
-        Payment payment =
-                paymentRepository.findById(paymentId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Payment",
-                                        "paymentId",
-                                        paymentId
-                                )
-                        );
 
-        if (payment.getPaymentStatus()
-                == PaymentStatus.SUCCESS) {
+        } catch (StripeException ex) {
 
-            throw new APIException(
-                    "Successful payment cannot be marked failed"
-            );
+            log.error("Refund failed. paymentId={}", paymentId, ex);
+            throw new APIException("Refund processing failed");
         }
-
-        payment.setPaymentStatus(
-                PaymentStatus.FAILED
-        );
-
-        payment.setGatewayResponse(
-                failureReason
-        );
-
-        payment.setUpdatedAt(
-                LocalDateTime.now()
-        );
-
-        Payment updatedPayment =
-                paymentRepository.save(payment);
-
-        log.info(
-                "Payment marked FAILED. paymentId={}",
-                paymentId
-        );
-
-        return paymentMapper.toResponse(
-                updatedPayment
-        );
     }
 }

@@ -9,14 +9,6 @@ import java.util.Optional;
 public interface PaymentRepository
         extends JpaRepository<Payment, Long> {
 
-    Optional<Payment> findByTransactionId(
-            String transactionId
-    );
-
-    Optional<Payment> findByGatewayTransactionId(
-            String gatewayTransactionId
-    );
-
     Optional<Payment> findByOrder_OrderId(
             Long orderId
     );
@@ -27,10 +19,6 @@ public interface PaymentRepository
 
     Optional<Payment> findByStripeCheckoutSessionId(
             String stripeCheckoutSessionId
-    );
-
-    boolean existsByIdempotencyKey(
-            String idempotencyKey
     );
 
 }

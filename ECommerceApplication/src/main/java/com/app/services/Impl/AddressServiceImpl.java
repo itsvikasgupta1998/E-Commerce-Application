@@ -24,16 +24,11 @@ public class AddressServiceImpl implements AddressService {
 	private final AddressMapper addressMapper;
 
 	@Override
-	public AddressResponse createAddress(
-			AddressRequest request
-	) {
+	public AddressResponse createAddress(AddressRequest request) {
 
 		log.info(
 				"Creating address for city={}, state={}, pincode={}",
-				request.getCity(),
-				request.getState(),
-				request.getPincode()
-		);
+				request.getCity(), request.getState(), request.getPincode());
 
 		addressRepository
 				.findByCountryAndStateAndCityAndPincodeAndStreetAndBuildingName(
@@ -46,161 +41,68 @@ public class AddressServiceImpl implements AddressService {
 				)
 				.ifPresent(address -> {
 
-					log.warn(
-							"Duplicate address creation attempt detected for city={}, pincode={}",
+					log.warn("Duplicate address creation attempt detected for city={}, pincode={}",
 							request.getCity(),
-							request.getPincode()
-					);
-
-					throw new APIException(
-							"Address already exists"
-					);
+							request.getPincode());
+					throw new APIException("Address already exists");
 				});
 
-		Address address =
-				addressMapper.toEntity(request);
-
-		Address saved =
-				addressRepository.save(address);
-
-		log.info(
-				"Address created successfully. addressId={}",
-				saved.getAddressId()
-		);
-
+		Address address = addressMapper.toEntity(request);
+		Address saved = addressRepository.save(address);
+		log.info("Address created successfully. addressId={}", saved.getAddressId());
 		return addressMapper.toResponse(saved);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
-	public AddressResponse getAddressById(
-			Long addressId
-	) {
-
-		log.debug(
-				"Fetching address with id={}",
-				addressId
-		);
-
-		Address address =
-				addressRepository.findById(addressId)
+	public AddressResponse getAddressById(Long addressId) {
+		log.debug("Fetching address with id={}", addressId);
+		Address address = addressRepository.findById(addressId)
 						.orElseThrow(() -> {
-
-							log.warn(
-									"Address not found. addressId={}",
-									addressId
-							);
-
-							return new ResourceNotFoundException(
-									"Address",
-									"addressId",
-									addressId
-							);
+							log.warn("Address not found. addressId={}", addressId);
+							return new ResourceNotFoundException("Address", "addressId", addressId);
 						});
-
-		log.debug(
-				"Address fetched successfully. addressId={}",
-				addressId
-		);
-
+		log.debug("Address fetched successfully. addressId={}", addressId);
 		return addressMapper.toResponse(address);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<AddressResponse> getAllAddresses() {
-
 		log.debug("Fetching all addresses");
-
-		List<AddressResponse> addresses =
-				addressRepository.findAll()
-						.stream()
-						.map(addressMapper::toResponse)
-						.toList();
-
-		log.debug(
-				"Total addresses fetched={}",
-				addresses.size()
-		);
-
+		List<AddressResponse> addresses = addressRepository
+				.findAll()
+				.stream()
+				.map(addressMapper::toResponse)
+				.toList();
+		log.debug("Total addresses fetched={}", addresses.size());
 		return addresses;
 	}
 
 	@Override
-	public AddressResponse updateAddress(
-			Long addressId,
-			AddressRequest request
-	) {
-
-		log.info(
-				"Updating address. addressId={}",
-				addressId
-		);
-
-		Address address =
-				addressRepository.findById(addressId)
+	public AddressResponse updateAddress(Long addressId, AddressRequest request) {
+		log.info("Updating address. addressId={}", addressId);
+		Address address = addressRepository.findById(addressId)
 						.orElseThrow(() -> {
-
-							log.warn(
-									"Address not found for update. addressId={}",
-									addressId
-							);
-
-							return new ResourceNotFoundException(
-									"Address",
-									"addressId",
-									addressId
-							);
+							log.warn("Address not found for update. addressId={}", addressId);
+							return new ResourceNotFoundException("Address", "addressId", addressId);
 						});
-
-		addressMapper.updateEntity(
-				request,
-				address
-		);
-
-		Address updated =
-				addressRepository.save(address);
-
-		log.info(
-				"Address updated successfully. addressId={}",
-				updated.getAddressId()
-		);
-
+		addressMapper.updateEntity(request, address);
+		Address updated = addressRepository.save(address);
+		log.info("Address updated successfully. addressId={}", updated.getAddressId());
 		return addressMapper.toResponse(updated);
 	}
 
 	@Override
-	public void deleteAddress(
-			Long addressId
-	) {
-
-		log.info(
-				"Deleting address. addressId={}",
-				addressId
-		);
-
-		Address address =
-				addressRepository.findById(addressId)
+	public void deleteAddress(Long addressId) {
+		log.info("Deleting address. addressId={}", addressId);
+		Address address = addressRepository.findById(addressId)
 						.orElseThrow(() -> {
-
-							log.warn(
-									"Address not found for deletion. addressId={}",
-									addressId
-							);
-
-							return new ResourceNotFoundException(
-									"Address",
-									"addressId",
-									addressId
-							);
+							log.warn("Address not found for deletion. addressId={}", addressId);
+							return new ResourceNotFoundException("Address", "addressId", addressId);
 						});
-
 		addressRepository.delete(address);
-
-		log.info(
-				"Address deleted successfully. addressId={}",
-				addressId
-		);
+		log.info("Address deleted successfully. addressId={}", addressId);
 	}
 
 

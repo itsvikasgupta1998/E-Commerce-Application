@@ -15,38 +15,22 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @GetMapping("/{paymentId}")
-    public ResponseEntity<PaymentResponse> getPayment(
-            @PathVariable Long paymentId
-    ) {
-
-        return ResponseEntity.ok(
-                paymentService.getPaymentById(
-                        paymentId
-                )
-        );
+    public ResponseEntity<PaymentResponse> getPayment(@PathVariable Long paymentId) {
+        return ResponseEntity.ok(paymentService.getPaymentById(paymentId));
     }
 
     @PostMapping("/checkout/{orderId}")
-    public ResponseEntity<CheckoutSessionResponse> createCheckoutSession(
-            @PathVariable Long orderId
-    ) {
-
-        return ResponseEntity.ok(
-                paymentService.createCheckoutSession(
-                        orderId
-                )
-        );
+    public ResponseEntity<CheckoutSessionResponse> createCheckoutSession(@PathVariable Long orderId) {
+        return ResponseEntity.ok(paymentService.createCheckoutSession(orderId));
     }
 
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<PaymentResponse> getPaymentByOrderId(
-            @PathVariable Long orderId
-    ) {
+    public ResponseEntity<PaymentResponse> getPaymentByOrderId(@PathVariable Long orderId) {
+        return ResponseEntity.ok(paymentService.getPaymentByOrderId(orderId));
+    }
 
-        return ResponseEntity.ok(
-                paymentService.getPaymentByOrderId(
-                        orderId
-                )
-        );
+    @PostMapping("/{paymentId}/refund")
+    public ResponseEntity<PaymentResponse> refundPayment(@PathVariable Long paymentId) {
+        return ResponseEntity.ok(paymentService.refundPayment(paymentId));
     }
 }

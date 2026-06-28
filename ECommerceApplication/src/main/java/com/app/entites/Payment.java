@@ -93,6 +93,11 @@ public class Payment extends BaseEntity {
 	@Version
 	private Long version;
 
+	@Column(unique = true, length = 100)
+	private String stripeRefundId;
+
+	private LocalDateTime refundedAt;
+
 
 
 

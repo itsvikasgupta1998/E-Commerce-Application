@@ -28,24 +28,14 @@ public class ProductController {
 			@Valid @RequestBody CreateProductRequest request
 	) {
 
-		return ResponseEntity
-				.status(HttpStatus.CREATED)
-				.body(
-						productService.createProduct(
-								categoryId,
-								request
-						)
-				);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(productService.createProduct(categoryId, request));
 	}
 
 	@GetMapping("/{productId}")
-	public ResponseEntity<ProductResponse> getProduct(
-			@PathVariable Long productId
-	) {
-
-		return ResponseEntity.ok(
-				productService.getProductById(productId)
-		);
+	public ResponseEntity<ProductResponse> getProduct(@PathVariable Long productId)
+	{
+		return ResponseEntity.ok(productService.getProductById(productId));
 	}
 
 	@GetMapping
@@ -56,14 +46,7 @@ public class ProductController {
 			@RequestParam(defaultValue = "asc") String sortDir
 	) {
 
-		return ResponseEntity.ok(
-				productService.getAllProducts(
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+		return ResponseEntity.ok(productService.getAllProducts(page, size, sortBy, sortDir));
 	}
 
 	@GetMapping("/category/{categoryId}")
@@ -73,17 +56,9 @@ public class ProductController {
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "productId") String sortBy,
 			@RequestParam(defaultValue = "asc") String sortDir
-	) {
-
-		return ResponseEntity.ok(
-				productService.getProductsByCategory(
-						categoryId,
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+	)
+	{
+		return ResponseEntity.ok(productService.getProductsByCategory(categoryId, page, size, sortBy, sortDir));
 	}
 
 	@GetMapping("/search")
@@ -92,66 +67,40 @@ public class ProductController {
 			@RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size,
 			@RequestParam(defaultValue = "productId") String sortBy,
-			@RequestParam(defaultValue = "asc") String sortDir
-	) {
+			@RequestParam(defaultValue = "asc") String sortDir) {
 
-		return ResponseEntity.ok(
-				productService.searchProducts(
-						keyword,
-						page,
-						size,
-						sortBy,
-						sortDir
-				)
-		);
+		return ResponseEntity.ok(productService.searchProducts(keyword, page, size, sortBy, sortDir));
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@PutMapping("/{productId}")
 	public ResponseEntity<ProductResponse> updateProduct(
 			@PathVariable Long productId,
-			@Valid @RequestBody UpdateProductRequest request
-	) {
+			@Valid @RequestBody UpdateProductRequest request) {
 
-		return ResponseEntity.ok(
-				productService.updateProduct(
-						productId,
-						request
-				)
-		);
+		return ResponseEntity.ok(productService.updateProduct(productId, request));
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
-	@PutMapping(
-			value = "/{productId}/image",
-			consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-	)
+	@PutMapping(value = "/{productId}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<ProductResponse> updateProductImage(
 			@PathVariable Long productId,
-			@RequestParam("image") MultipartFile image
-	) throws Exception {
-
-		return ResponseEntity.ok(
-				productService.updateProductImage(
-						productId,
-						image
-				)
-		);
+			@RequestParam("image") MultipartFile image)
+			throws Exception
+	{
+		return ResponseEntity.ok(productService.updateProductImage(productId, image));
 	}
 
 	@PreAuthorize("hasRole('ADMIN')")
 	@DeleteMapping("/{productId}")
 	public ResponseEntity<APIResponse> deleteProduct(
-			@PathVariable Long productId
-	) {
+			@PathVariable Long productId) {
 
 		productService.deleteProduct(productId);
-
-		return ResponseEntity.ok(
-				APIResponse.builder()
-						.message("Category deleted successfully")
-						.success(true)
-						.build()
-		);
+		return ResponseEntity.ok(APIResponse
+				.builder()
+				.message("Category deleted successfully")
+				.success(true)
+				.build());
 	}
 }

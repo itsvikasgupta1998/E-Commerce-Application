@@ -33,16 +33,11 @@ public class CategoryServiceImpl implements CategoryService {
 
 	@Override
 	public CategoryResponse createCategory(CreateCategoryRequest request) {
-
 		log.info("Creating category with name: {}", request.getCategoryName());
 		String categoryName = request.getCategoryName().trim();
-
 		categoryRepository.findByCategoryNameIgnoreCase(categoryName)
 				.ifPresent(existing -> {
-
-					throw new APIException(
-							"Category already exists"
-					);
+					throw new APIException("Category already exists");
 				});
 
 		Category category = categoryMapper.toEntity(request);
@@ -55,85 +50,51 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	@Transactional(readOnly = true)
 	public CategoryResponse getCategoryById(Long categoryId) {
-
 		log.info("Fetching category with id: {}", categoryId);
-
 		Category category = categoryRepository.findById(categoryId)
 				.orElseThrow(() -> {
 					log.error("Category not found with id: {}", categoryId);
-					return new ResourceNotFoundException(
-							"Category",
-							"categoryId",
-							categoryId
-					);
+					return new ResourceNotFoundException("Category", "categoryId", categoryId);
 				});
 
 		log.debug("Category fetched successfully: {}", category.getCategoryName());
-
 		return categoryMapper.toResponse(category);
 	}
 
 	@Override
-	public CategoryResponse updateCategory(
-			Long categoryId,
-			UpdateCategoryRequest request
+	public CategoryResponse updateCategory(Long categoryId, UpdateCategoryRequest request
 	) {
 
 		log.info("Updating category with id: {}", categoryId);
-
 		Category category = categoryRepository.findById(categoryId)
-				.orElseThrow(() -> new ResourceNotFoundException(
-						"Category",
-						"categoryId",
-						categoryId
-				));
+				.orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
-		String categoryName =
-				request.getCategoryName().trim();
-
-		categoryRepository
-				.findByCategoryNameIgnoreCase(categoryName)
-				.ifPresent(existing -> {
-
-					if (!existing.getCategoryId()
-							.equals(categoryId)) {
-
-						throw new APIException(
-								"Category already exists"
-						);
+		String categoryName = request.getCategoryName().trim();
+		categoryRepository.findByCategoryNameIgnoreCase(categoryName)
+				.ifPresent(existing ->
+				{
+					if (!existing.getCategoryId().equals(categoryId))
+					{
+						throw new APIException("Category already exists");
 					}
 				});
-
 		category.setCategoryName(categoryName);
-
-		Category updated =
-				categoryRepository.save(category);
-
+		Category updated = categoryRepository.save(category);
 		return categoryMapper.toResponse(updated);
 	}
 
 	@Override
 	public void deleteCategory(Long categoryId) {
-
 		log.info("Deleting category with id: {}", categoryId);
-
 		Category category = categoryRepository.findById(categoryId)
 				.orElseThrow(() -> {
 					log.error("Category not found for deletion: {}", categoryId);
-					return new ResourceNotFoundException(
-							"Category",
-							"categoryId",
-							categoryId
-					);
+					return new ResourceNotFoundException("Category", "categoryId", categoryId);
 				});
 
 		long productCount = productRepository.countByCategory_CategoryId(categoryId);
-
 		if (productCount > 0) {
-
-			throw new APIException(
-					"Cannot delete category because products exist in it."
-			);
+			throw new APIException("Cannot delete category because products exist in it.");
 		}
 
 		categoryRepository.delete(category);
@@ -143,34 +104,21 @@ public class CategoryServiceImpl implements CategoryService {
 	@Override
 	@Transactional(readOnly = true)
 	public CategoryPageResponse getAllCategories(int page, int size, String sortBy, String sortDir) {
-
 		log.info("Fetching categories - page: {}, size: {}, sortBy: {}, sortDir: {}",
 				page, size, sortBy, sortDir);
 
-		Set<String> allowedFields =
-				Set.of(
-						"categoryId",
-						"categoryName",
-						"createdAt",
-						"updatedAt"
-				);
+		Set<String> allowedFields = Set.of("categoryId", "categoryName", "createdAt", "updatedAt");
 
 		if (!allowedFields.contains(sortBy)) {
-
-			throw new APIException(
-					"Invalid sort field: " + sortBy
-			);
+			throw new APIException("Invalid sort field: " + sortBy);
 		}
 
 		Sort sort = sortDir.equalsIgnoreCase("desc")
 				? Sort.by(sortBy).descending()
 				: Sort.by(sortBy).ascending();
 
-		Page<Category> categoryPage =
-				categoryRepository.findAll(PageRequest.of(page, size, sort));
-
+		Page<Category> categoryPage = categoryRepository.findAll(PageRequest.of(page, size, sort));
 		log.debug("Fetched {} categories from DB", categoryPage.getTotalElements());
-
 		CategoryPageResponse response = CategoryPageResponse.builder()
 				.content(categoryPage.getContent()
 						.stream()
@@ -184,10 +132,6 @@ public class CategoryServiceImpl implements CategoryService {
 				.build();
 
 		log.info("Category pagination response prepared successfully");
-
 		return response;
 	}
-
-
-
 }
