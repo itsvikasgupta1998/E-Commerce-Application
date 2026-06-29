@@ -7,7 +7,20 @@ import java.util.Set;
 
 
 @Entity
-@Table(name = "addresses")
+@Table(
+		name = "addresses",
+		uniqueConstraints = @UniqueConstraint(
+				name = "uk_address",
+				columnNames = {
+						"street",
+						"building_name",
+						"city",
+						"state",
+						"country",
+						"pincode"
+				}
+		)
+)
 @Data
 public class Address extends BaseEntity {
 
@@ -15,22 +28,23 @@ public class Address extends BaseEntity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long addressId;
 
-	@Column(nullable = false)
+	@Column(nullable = false, length = 100)
 	private String street;
 
 	@Column(nullable = false)
 	private String buildingName;
 
+
 	@Column(nullable = false)
 	private String city;
 
-	@Column(nullable = false)
+	@Column(nullable = false, length = 50)
 	private String state;
 
-	@Column(nullable = false)
+	@Column(nullable = false, length = 50)
 	private String country;
 
-	@Column(nullable = false)
+	@Column(nullable = false, length = 10)
 	private String pincode;
 
 	@ManyToMany(mappedBy = "addresses")

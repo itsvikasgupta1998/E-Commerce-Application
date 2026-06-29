@@ -11,8 +11,8 @@ import io.swagger.v3.oas.annotations.security.SecurityScheme;
 		name = "E-Commerce Application",
 		scheme = "bearer",
 		type = SecuritySchemeType.HTTP,
-		in = SecuritySchemeIn.HEADER
-)
+		in = SecuritySchemeIn.HEADER)
+
 public class ECommerceApplication {
 
 	public static void main(String[] args) {
