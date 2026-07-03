@@ -1,0 +1,19 @@
+[33md0abe4e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m remove CI/CD workflow
+[33md52e7aa[m trigger workflow
+[33m510b4a0[m trigger workflow
+[33m9c18c17[m trigger workflow
+[33mfe64e5c[m Fix CI/CD pipeline
+[33m19e2abb[m Add GitHub Actions CI/CD
+[33mea7e9c0[m Updated application config and entity changes
+[33m3b0d6e8[m feat: containerize Spring Boot application using Docker and Docker Compose
+[33m132d8d2[m feat(payment): implement refund flow, checkout expiry handling, and webhook reliability improvements
+[33m1d6fad8[m feat(payment): implement Stripe checkout, webhook handling, and payment tracking
+[33m403e5d2[m feat: enhance product and category modules with image management, validation, and API improvements
+[33m2af8ba9[m feat(user-management): implement soft delete and user restore functionality
+[33mdd7eec8[m feat: implement secure password reset workflow and optimistic locking
+[33mdcda567[m feat(auth): add email verification and token expiration handling
+[33mcd1e6bf[m Added production logging in all service layers
+[33m8f40bf8[m Remove IntelliJ files and update gitignore
+[33m10915bc[m Initial commit - ECommerce Application
+[33md7960b1[m Initial commit - ECommerce Application
+[33m8e23a1d[m Initial commit
