@@ -9,7 +9,7 @@ RUN mvn dependency:go-offline
 
 COPY src ./src
 
-RUN mvn clean package -DskipTests
+RUN MAVEN_OPTS="-Xmx512m" mvn clean package -DskipTests
 
 
 # ---------- Stage 2 : Runtime ----------
