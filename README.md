@@ -1,67 +1,161 @@
-# E-Commerce-Application
+# 🛒 E-Commerce-Application (Spring Boot + JWT + AWS EC2)
 
-- The E-Commerce Application is built using Java and Spring Boot, with security, scalability, and ease of maintenance. The backend uses Spring Data JPA to interact with a MySQL database, making it easy to manage and store important entities such as users, products, categories, orders, and more. User authentication is handled by Auth0, providing secure and reliable means of REST APIs.
+A production-style **E-Commerce Backend System** built using **Java, Spring Boot, MySQL, Docker, and AWS EC2 deployment**.
 
-- The APIs are well-documented and easily accessible through Swagger UI, making it simple for developers to test and understand the various endpoints. Overall, this project provides secure Rest APIs to create a scalable platform for businesses to sell their products to customers.
+This project demonstrates a real-world backend system with authentication, role-based access, cart, orders, and cloud deployment (EC2 + Docker).
 
-# Features
-## Admin:-
-- Login
-- Users
-- Address
-- Categories
-- Products
-- Price & discount
-- Orders
-## User:-
-- Registration & Login
-- Fetch categories and products based on category
-- Adding & deleting products to cart
-- Managing address and products quantity
-- Ordering products and fetching order status
+---
 
-# Security
-- The API is secured using JSON Web Tokens (JWT) handled by Auth0. To access the API, you will need to obtain a JWT by authenticating with the /login endpoint. The JWT should then be passed in the Authorize option available in the Swagger-ui.
+## ⚙️ Tech Stack
 
-  ### Example:
-  - Authorization: <your_jwt>
-
-# Technologies:
-- Java 17 or above
-- Spring Boot 3.0
-- Maven
+- Java 17+
+- Spring Boot 3
+- Spring Security + JWT (Auth0)
+- Spring Data JPA / Hibernate
 - MySQL
-- Spring Data JPA
-- Spring Security
-- JSON Web Tokens (JWT)
-- Auth0
-- Swagger UI
+- Docker
+- AWS EC2 (Deployment)
+- Maven
+- Swagger / OpenAPI
 
-# Running the app
-1. Clone the repository: git clone https://github.com/Sirajuddin135/E-Commerce-Application.git
-2. Import the project into STS:
-  - Click File > Import...
-  - Select Maven > Existing Maven Projects and click Next
-  - Browse to the project directory and click Finish
-3. Update the values in application.properties with your MySQL database connection details.
-4. Run the app: Right-click the project in the Package Explorer and click Run As > Spring Boot App.
+---
 
-# API documentation
-- API documentation is available via Swagger UI at http://localhost:8080/swagger-ui/index.html
+## ✨ Features
 
-# ER-Diagram
-<img width="605" alt="ER-Diagram" src="https://user-images.githubusercontent.com/101395494/216134703-e7cefef6-187f-44df-9fd4-52aedc66d24b.png">
+### 👨‍💼 Admin
+- Manage Users
+- Manage Categories
+- Manage Products
+- Manage Orders
+- Manage Pricing & Discounts
 
-# Swagger-ui
-<img width="947" alt="Swagger-UI" src="https://user-images.githubusercontent.com/101395494/216388614-f8eed33e-cbbb-4cfa-997e-b76674bbb465.png">
+### 👤 User
+- User Registration & Login
+- Browse Products & Categories
+- Add / Remove Items from Cart
+- Manage Address
+- Place Orders
+- Track Order Status
 
-# API Controllers
-<img width="947" alt="Auth_Controller" src="https://user-images.githubusercontent.com/101395494/216388749-4f15d968-ae52-48a9-9c08-0b72d608084a.png">
-<img width="947" alt="User_Controller" src="https://user-images.githubusercontent.com/101395494/216755281-ebacb2a4-3f02-4d41-a695-d508ee537db1.png">
-<img width="947" alt="Address_Controller" src="https://user-images.githubusercontent.com/101395494/216388840-0a31a552-63e3-4b10-9fab-c6c705cd7af4.png">
-<img width="947" alt="Cart_Controller" src="https://user-images.githubusercontent.com/101395494/216388895-736fa8c1-7784-4d4d-8768-c619e6fd0e6f.png">
-<img width="947" alt="Category_Controller" src="https://user-images.githubusercontent.com/101395494/216388926-88c45391-d35b-4359-b239-86acb63ccb6b.png">
-<img width="947" alt="Product_Controller" src="https://user-images.githubusercontent.com/101395494/216755314-56904892-4a1d-4bc3-b40d-b9d76525ec83.png">
-<img width="947" alt="Order_Controller" src="https://user-images.githubusercontent.com/101395494/216388971-7d654a8e-6abc-4548-80c6-8d1173f56bc4.png">
+---
 
-# Thank You
+## 🔐 Security
+
+- JWT-based Authentication (Auth0)
+- Role-based Access Control (ADMIN / USER)
+- Secure REST APIs using Spring Security
+- Stateless session management
+
+### Authorization Header
+Send JWT token in request header:
+
+Authorization: Bearer <your_jwt_token>
+
+## 📡 API Documentation
+
+Swagger UI: http://localhost:8080/swagger-ui/index.html
+
+---
+
+## 🧱 Architecture
+
+- Layered Architecture (Controller → Service → Repository)
+- DTO-based request/response design
+- Clean separation of business logic
+- Scalable monolithic backend design
+
+---
+
+## 🗄️ Database Entities
+
+- Users
+- Products
+- Categories
+- Orders
+- Cart
+- Address
+
+---
+
+## 🚀 Deployment (AWS EC2 + Docker)
+
+This project is deployed on AWS EC2 instance using Docker & GitHub.
+
+### 🖥️ Deployment Flow
+
+- Code pushed to GitHub repository
+- EC2 instance created (Ubuntu)
+- Docker installed on EC2
+- GitHub repo cloned on EC2
+- Application started using Docker Compose
+- Backend runs on cloud server
+
+---
+
+## ⚙️ EC2 Setup Commands
+sudo apt update
+
+sudo apt install docker.io -y 
+
+sudo apt install docker-compose -y
+
+
+## 📥 Clone Project on EC2
+git clone https://github.com/itsvikasgupta1998/E-Commerce-Application.git
+
+cd E-Commerce-Application
+
+## 🐳 Run with Docker
+docker compose up -d --build
+
+
+## 🧹 Optional Cleanup
+docker image prune -af
+
+
+## 🌐 Live Deployment
+Application is hosted on AWS EC2 instance:
+
+http://3.110.49.172:8080
+
+
+## 📦 API Modules
+| Module   | Description                |
+| -------- | -------------------------- |
+| Auth     | Login & JWT authentication |
+| User     | User management            |
+| Product  | Product CRUD               |
+| Category | Category management        |
+| Cart     | Cart operations            |
+| Order    | Order processing           |
+| Address  | Address management         |
+
+
+## 💳 Payment Integration
+
+- Integrated **Stripe Payment Gateway**
+- Secure checkout session creation
+- Payment confirmation handling
+- Webhook-based payment status update
+
+## 📈 Future Improvements
+
+- Microservices architecture migration
+- Razorpay integration
+- Redis caching
+- Kafka-based order processing
+- CI/CD pipeline (GitHub Actions + AWS automation)
+
+## 👨‍💻 Author
+Built by Vikas Gupta
+
+GitHub: https://github.com/itsvikasgupta1998
+
+
+## ⭐ Project Highlights
+- Production-ready Spring Boot backend
+- JWT authentication & role-based security
+- Real-world e-commerce workflow
+- Docker containerization
+- AWS EC2 cloud deployment
+- Scalable REST API design
